@@ -81,6 +81,23 @@ static int color_value(const PNMImage *image, const size_t i, const size_t j, co
  * ------------------------------------------------------------------------- */
 static inline unsigned int min(const unsigned int firstValue, const unsigned int secondValue, const unsigned int thirdValue);
 
+/* ------------------------------------------------------------------------- *
+ * Give the minimum energy cost of the groove which stops at the pixel (i,j)
+ *
+ * PARAMETERS
+ * image        the PNM image
+ * i            the line index of the pixel
+ * j            the column index of the pixel
+ *
+ * RETURN
+ * >= 0, the minimum energy cost of the groove.
+ * -1, the image pointer equals NULL.
+ * -2, the data pointer of the image equals NULL.
+ * -3, the i index is bigger than the height of the image.
+ * -4, the j index is bigger than the width of the image.
+ * ------------------------------------------------------------------------- */
+static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j);
+
 static int pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
         fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in pixel_energy.\n");
@@ -221,12 +238,43 @@ static inline unsigned int min(const unsigned int firstValue, const unsigned int
     return thirdValue;
 }
 
+static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j){
+    if(!image){
+        fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in min_cost_energy.\n");
+        return -1;
+    }
+
+    if(!image->data){
+        fprintf(stderr, "** ERROR : data is not a valid pointeur (= NULL) in min_cost_energy.\n");
+        return -2;
+    }
+    
+    if(i > image->height){
+        fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in min_cost_energy.\n");
+        return -3;
+    }
+    
+    if(j > image->width){
+        fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in min_cost_energy.\n");
+        return -4;
+    }
+
+    if(i == 0)
+        return pixel_energy(image, i, j);
+
+    //Bottom-up approach
+    return pixel_energy(image, i, j) + min(min_cost_energy(image, i - 1, j), min_cost_energy(image, i - 1, j + 1), min_cost_energy(image, i - 1, j - 1));
+}
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
     //Test of the function pixel_energy()
-    printf("Energy of the pixel (%lu, %lu) : %d\n", k, k, pixel_energy(image, k, k));
+    printf("Energy of the pixel (%lu, %lu) : %d.\n", k, k, pixel_energy(image, k, k));
 
     //Test of the function min()
-    printf("min between 17, 53 and %lu : %u", k, min(17, 53, k));
+    printf("Min between 17, 53 and %lu : %u.\n", k, min(17, 53, k));
+
+    //Test of the function min_cost_energy()
+    printf("The min cost of the groove which stops at the pixel (%lu, %lu) is composed of a energy of %u.\n", k, k, min_cost_energy(image, k, k));
 
     return NULL;
 }
