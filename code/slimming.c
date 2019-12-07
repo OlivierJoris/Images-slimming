@@ -199,7 +199,6 @@ static int color_value(const PNMImage *image, const size_t i, const size_t j, co
 }
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
-    
     //Test of the function pixel_energy()
     printf("%d\n", pixel_energy(image, k, k));
 
