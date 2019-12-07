@@ -3,6 +3,6 @@
  * ------------------------------------------------------------------------- */
 
 #include <stddef.h>
-#include "PNM.h"
+#include "slimming.h"
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k);
