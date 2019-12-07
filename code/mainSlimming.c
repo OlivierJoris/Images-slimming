@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
     }
 
     // Save and free
-    writePNM(argv[2], output);
+    writePNM(argv[2], original);
     freePNM(original);
     freePNM(output);
 
