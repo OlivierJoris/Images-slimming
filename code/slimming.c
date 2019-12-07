@@ -68,6 +68,19 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
  * ------------------------------------------------------------------------- */
 static int color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel);
 
+/* ------------------------------------------------------------------------- *
+ * Give the minimum between 3 values
+ *
+ * PARAMETERS
+ * firstValue   the first value to compare
+ * secondValue  the second value to compare
+ * thirdValue   the third value to compare
+ *
+ * RETURN
+ * the minimum between firstValue, secondValue and thirdValue.
+ * ------------------------------------------------------------------------- */
+static inline unsigned int min(const unsigned int firstValue, const unsigned int secondValue, const unsigned int thirdValue);
+
 static int pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
         fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in pixel_energy.\n");
@@ -198,9 +211,22 @@ static int color_value(const PNMImage *image, const size_t i, const size_t j, co
     }
 }
 
+static inline unsigned int min(const unsigned int firstValue, const unsigned int secondValue, const unsigned int thirdValue){
+    if(firstValue < secondValue && firstValue < thirdValue)
+        return firstValue;
+    
+    if(secondValue < thirdValue)
+        return secondValue;
+    
+    return thirdValue;
+}
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
     //Test of the function pixel_energy()
-    printf("%d\n", pixel_energy(image, k, k));
+    printf("Energy of the pixel (%lu, %lu) : %d\n", k, k, pixel_energy(image, k, k));
+
+    //Test of the function min()
+    printf("min between 17, 53 and %lu : %u", k, min(17, 53, k));
 
     return NULL;
 }
