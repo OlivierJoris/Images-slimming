@@ -40,25 +40,71 @@
 
 \setcounter{section}{3}
 
-\subsection{Approche exhaustive}
+\subsection{Approche exhaustive pour déterminer le sillon optimal}
 
-\subsection{Formulation récursive de \proc{C}(i, j)}
+Soient \textit{n}, la hauteur de l'image, et \textit{m}, la largeur de celle-ci. Une approche exhaustive pour déterminer le sillon optimal serait d'envisager tous les sillons possibles arrivant à un pixel de la dernière ligne de l'image et de prendre celui avec le coût minimal en énergie. Pour un pixel fixé du sillon, on a 3 possibilités pour le prochain : celui directement en-dessous, celui en-dessous à gauche ou celui en-dessous à droite. Etant donné que la dernière ligne, comme toutes les autres, comporte \textit{m} pixels, on a \textit{m} potentiels pixels faisant partie du sillon optimal pour celle-ci. La complexité d'une telle approche est donc en $\Theta(m * 3^n)$.
 
-\proc{C}(i, j)= $ \left\{
+\subsection{Formulation récursive du coût d'énergie du sillon optimal}
+
+Soit \proc{C}(i, j), le coût en énergie du sillon optimal s'arrêtant au pixel (i, j) avec $1 \leq i \leq n$ et $ 1 \leq j \leq m$.
+
+On a : \proc{C}(i, j)= $ \left\{
 	\begin{array}{ll}
-        \text{ 0 \textit{si} i $\geq$ n \textit{et} j $\geq$ m}\\
-        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i, j-1), \proc{C}(i+1, j-1), \proc{C}(i-1,j-1)\}\textit{ sinon}.
+        \proc{E}(i, j) \ \text{si} \ i = 0 \ \text{ou} \ j = 0\\
+        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j-1), \proc{C}(i-1, j), \proc{C}(i-1,j+1)\}\textit{ sinon}.
     \end{array}
 \right.$
 
 \subsection{Graphe des appels récursifs}
 
+Le graphe ci-dessous représente les premiers appels récursifs pour trouver de la fonction de coût du sillon optimal s'arrêtant au pixel (i, j). 
+
+\begin{center}
+\begin{tikzpicture}[scale = 0.85, nodes={scale = 0.45, draw, rectangle}, thick]
+\node{\proc{C}(i, j)}
+    child { node {\proc{C}(i - 1, j - 1)}
+        child { node {\proc{C}(i - 2, j - 2)} 
+        }        
+        child { node {\proc{C}(i - 2, j - 1)} 
+        }
+        child { node {\proc{C}(i - 2, j)}
+        }
+    }
+  	child[missing]
+  	child[missing]
+    child { node {\proc{C}(i - 1, j)}
+        child { node {\proc{C}(i - 2, j - 1)} 
+        }        
+        child { node {\proc{C}(i - 2, j)} 
+        }
+        child { node {\proc{C}(i - 2, j + 1)}
+        }
+   	}
+    child[missing]
+    child[missing]
+    child { node {\proc{C}(i - 1, j + 1)}
+    	child { node {\proc{C}(i - 2, j)} 
+        }        
+        child { node {\proc{C}(i - 2, j + 1)} 
+        }
+        child { node {\proc{C}(i - 2, j + 2)}
+        }
+    }; 
+\end{tikzpicture}
+\end{center}
+
+Si on continue la construction de ce graphe, celui-ci croît exponentiellement jusqu'à rencontrer un cas de base. Cette implémentation n'est pas optimale, les appels récursifs étant exponentiels et des résultats obtenus précédemment sont recalculés. Une approche par programmation dynamique faisant intervenir la mémoïsation de certains coûts réduirait le temps de calcul.
+
 \subsection{Pseudo-code du calcul du coût du sillon optimal}
+
+La fonction \proc{ComputeOptimalGrooveCost} prend en argument une table des coûts dont l'élément (i, j) renseigne sur le coût du pixel (i,j).
+
+\begin{codebox} %%Explication du package : https://www.cs.dartmouth.edu/~thc/clrscode
+        \Procname{$\proc{ComputeOptimalGrooveCost}(cTable)$}
+\end{codebox}
 
 \subsection{Pseudo-code pour renvoyer l'image réduite de k pixels en largeur}
 
 \subsection{Complexité en temps et en espace}
-
-
 
 \end{document}
