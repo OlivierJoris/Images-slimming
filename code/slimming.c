@@ -816,15 +816,22 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	Groove* optimalGroove;
 	//Compute the the CostTable. Dynamic programming - memoization.
-	CostTable* nCostTable;
+	CostTable* nCostTable = NULL;
+
+	size_t numberOfCostTables = 0;
 
 	for(size_t number = 0; number < k; ++number){
 
-		nCostTable = compute_cost_table(reducedImage);
-		if(!nCostTable){
-			fprintf(stderr, "** ERROR while creating the cost table.\n");
-			freePNM(reducedImage);
-			return NULL;
+		if(!(number % 2)){
+			numberOfCostTables++;
+			if(nCostTable)
+				destroy_cost_table(nCostTable);
+			nCostTable = compute_cost_table(reducedImage);
+			if(!nCostTable){
+				fprintf(stderr, "** ERROR while creating the cost table.\n");
+				freePNM(reducedImage);
+				return NULL;
+			}
 		}
 
 		optimalGroove = find_optimal_groove(nCostTable);
@@ -838,9 +845,10 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 		destroy_groove(optimalGroove);
-		destroy_cost_table(nCostTable);
 
 	}//Fin for()
+
+	printf("Number of cost tables = %lu\n", numberOfCostTables);
 
     return reducedImage;
 }//End reduceImageWidth()
