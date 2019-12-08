@@ -697,7 +697,7 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 		}
 	}
 
-	printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
+	//printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
 
 	//We need to add that pixel in the path of the Groove.
 	optimalGroove->path[nCostTable->height - 1].line = nCostTable->height - 1;
