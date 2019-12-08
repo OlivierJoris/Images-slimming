@@ -372,6 +372,49 @@ static void destroy_cost_table(CostTable* nCostTable){
 	return;
 }//End of destroy_cost_table()
 
+/*static int update_cost_table(CostTable* nCostTable, Groove* nGroove){
+	if(!nCostTable)
+		return -1;
+	if(!CostTable->table)
+		return -2;
+
+	if(!nGroove)
+		return -3;
+	if(!nGroove->path)
+		return -4;
+
+
+	// For each line in nCostTable, we should shift one position left every elements
+	// from the position given by nGroov up to the end of the line.
+
+
+	size_t beginningIndexShift;
+
+	for(size_t lineIndex = 0; lineIndex < nCostTable->height; ++lineIndex){
+
+		beginningIndexShift = nGroove->path[lineIndex].column;
+
+		//Shifting
+		for(size_t i = beginningIndexShift; i < nCostTable->width - 1; ++i)
+			nCostTable->table[lineIndex][i] = nCostTable->table[lineIndex][i + 1];
+
+	}//End for()
+
+
+	// For each pixel in the Groove, we need to update the cost of each of his neighbours.
+	// TOP-BOTTOM APPROACH
+
+
+	//The first line is not going to change so we start at line 1 (not 0).
+	for(size_t line = 1; nCostTable->height; ++line){
+
+		for()
+	}
+
+
+
+}//End update_cost_table()*/
+
 static float pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
         fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in pixel_energy.\n");
@@ -755,18 +798,10 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
     //Test of the function min_cost_energy()
     //printf("The min cost of the groove which stops at the pixel (%d, %d) is composed of a energy of %u.\n", 4, 4, min_cost_energy(image, 4, 4));
 
-	//Compute the the CostTable. Dynamic programming - memoization.
-	CostTable* nCostTable = compute_cost_table(image);
-	if(nCostTable)
-		printf("* CostTable was constructed without issues.\n");
-	else
-		printf("** ERROR while creating the CostTable.\n");
-
 	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
 	PNMImage* reducedImage = createPNM(image->width, image->height);
 	if(!reducedImage){
 		fprintf(stderr, "** ERROR while creating a PNMImage in reduceImageWidth.\n");
-		destroy_cost_table(nCostTable);
 		return NULL;
 	}
 
@@ -774,42 +809,38 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 	int resultCopy = copy_pnm_image(image, reducedImage);
 	if(resultCopy < 0){
 		fprintf(stderr, "** ERROR while copying a PNMImage into another in reduceImageWidth.\n");
-		destroy_cost_table(nCostTable);
 		return NULL;
 	}else{
 		printf("* image was successfully copied in reducedImage\n");
 	}
 
-	Groove* optimalGroove = find_optimal_groove(nCostTable);
+	Groove* optimalGroove;
+	//Compute the the CostTable. Dynamic programming - memoization.
+	CostTable* nCostTable;
 
-	//printf("Groove last coordinates = (%lu, %lu)\n", optimalGroove->path[nCostTable->height - 1].line, optimalGroove->path[nCostTable->height - 1].column);
+	for(size_t number = 0; number < k; ++number){
 
-	/*FILE* path = fopen("path.txt", "w");
-	if(path){
-		fprintf(path, "Total cost of the path : %f\n", optimalGroove->cost);
-		fprintf(path, "LINE || COLUMN\n");
-
-		for(size_t i = 0; i < image->height; ++i){
-			fprintf(path, "%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
+		nCostTable = compute_cost_table(reducedImage);
+		if(!nCostTable){
+			fprintf(stderr, "** ERROR while creating the cost table.\n");
+			freePNM(reducedImage);
+			return NULL;
 		}
 
-		fclose(path);
-	}*/
+		optimalGroove = find_optimal_groove(nCostTable);
 
-	int resultRemove = remove_groove_image(reducedImage, optimalGroove);
-	if(resultRemove < 0){
-		fprintf(stderr, "** ERROR while removing groove in image\n");
+		int resultRemove = remove_groove_image(reducedImage, optimalGroove);
+		if(resultRemove < 0){
+			fprintf(stderr, "** ERROR while removing groove in image\n");
+			destroy_groove(optimalGroove);
+			destroy_cost_table(nCostTable);
+			freePNM(reducedImage);
+			return NULL;
+		}
 		destroy_groove(optimalGroove);
 		destroy_cost_table(nCostTable);
-		freePNM(reducedImage);
-		return NULL;
-	}else{
-		printf("* Groove was removed from image.\n");
-	}
 
-	destroy_groove(optimalGroove);
-
-	destroy_cost_table(nCostTable);
+	}//Fin for()
 
     return reducedImage;
 }//End reduceImageWidth()
