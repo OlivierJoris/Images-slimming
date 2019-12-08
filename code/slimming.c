@@ -151,7 +151,7 @@ static CostTable* compute_cost_table(const PNMImage *image){
 	}
 
 	//Allocate struct.
-	CostTable* nCostTable = malloc(sizeof(nCostTable));
+	CostTable* nCostTable = malloc(sizeof(CostTable));
 	if(!nCostTable){
 		fprintf(stderr, "** ERROR while allocating a CostTable in compute_cost_table.\n");
 		return NULL;
@@ -254,19 +254,19 @@ static float pixel_energy(const PNMImage *image, const size_t i, const size_t j)
         return -2;
     }
 
-    if(i > image->height){
+    if(i >= image->height){
         fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in pixel_energy.\n");
         return -3;
     }
 
-    if(j > image->width){
+    if(j >= image->width){
         fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in pixel_energy.\n");
         return -4;
     }
 
     return color_energy(image, i, j, red) + color_energy(image, i, j, green) +
            color_energy(image, i, j, blue);
-}
+}//End pixel_energy()
 
 static float color_energy(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
     if(!image){
@@ -279,53 +279,55 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
         return -2.0;
     }
 
-    if(i > image->height){
+    if(i >= image->height){
         fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in color_energy.\n");
         return -3.0;
     }
 
-    if(j > image->width){
+    if(j >= image->width){
         fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in color_energy.\n");
         return -4.0;
     }
 
     //Extremes cases (pixel is on a edge of the image).
-    if(j == image->width && i == image->height){
+
+
+    if(i == image->height - 1 && j == image->width - 1){ //Bottom right corner.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
 
-    if(i == 0 && j == 0){
+    if(i == 0 && j == 0){ //Top left corner.
         return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
                (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
-    if(i == 0 && j == image->width){
+    if(i == 0 && j == image->width - 1){ //Top right corner.
         return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
 
-    if(j == 0 && i == image->height){
+    if(i == image->height - 1 && j == 0){ //Bottom left corner.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
                (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
-    if(i == 0 && j != image->width && j != 0){
+    if(i == 0 && j < image->width - 1 && j > 0){ //Top.
         return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
-    if(i == image->height && j != image->width && j != 0){
+    if(i == image->height - 1 && j < image->width - 1 && j > 0){ //Bottom.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
-    if(j == 0 && i != image->height && i != 0){
+    if(j == 0 && i < image->height - 1 && i > 0){ //Left.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
                (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
-    if(j == image->width && i != image->height && i != 0){
+    if(j == image->width - 1 && i < image->height - 1 && i > 0){ //Right.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
@@ -333,7 +335,7 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
     //If the pixel isn't on a egde of the image.
     return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
            (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
-}
+}//End color_energy()
 
 static int color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
     if(!image){
@@ -346,12 +348,12 @@ static int color_value(const PNMImage *image, const size_t i, const size_t j, co
         return -2;
     }
 
-    if(i > image->height){
+    if(i >= image->height){
         fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in color_value.\n");
         return -3;
     }
 
-    if(j > image->width){
+    if(j >= image->width){
         fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in color_value.\n");
         return -4;
     }
@@ -371,7 +373,7 @@ static int color_value(const PNMImage *image, const size_t i, const size_t j, co
            return -5;
            break;
     }
-}
+}//End color_value()
 
 static inline float min_with_two_arguments(const float firstValue, const float secondValue){
 	if(firstValue < secondValue)
@@ -388,7 +390,7 @@ static inline float min_with_three_arguments(const float firstValue, const float
         return secondValue;
 
     return thirdValue;
-}
+}//End min_with_three_arguments()
 
 static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
@@ -416,7 +418,7 @@ static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const
 
     //Bottom-up approach
     return pixel_energy(image, i, j) + min_with_three_arguments(min_cost_energy(image, i - 1, j), min_cost_energy(image, i - 1, j + 1), min_cost_energy(image, i - 1, j - 1));
-}
+}//End min_cost_energy()
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
     //Test of the function pixel_energy()
@@ -446,4 +448,4 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 	destroy_cost_table(nCostTable);
 
     return NULL;
-}
+}//End reduceImageWidth()
