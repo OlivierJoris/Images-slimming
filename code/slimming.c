@@ -219,6 +219,18 @@ static Groove* find_optimal_groove(CostTable* nCostTable);
  * ------------------------------------------------------------------------- */
 static void destroy_groove(Groove* nGroove);
 
+/* ------------------------------------------------------------------------- *
+ * Remove Groove 'nGroove' in PNMImage 'image'.
+ *
+ * PARAMETERS
+ * image    The image in which we want to remove the Groove 'nGroove'.
+ * nGroove  The Groove we want to remove in PNMImage 'image'.
+ *
+ * RETURN
+ * /
+ * ------------------------------------------------------------------------- */
+static int remove_groove_image(PNMImage *image, Groove* nGroove);
+
 
 static int copy_pnm_image(const PNMImage *source, const PNMImage *destination){
 	if(!source)
@@ -660,6 +672,52 @@ static void destroy_groove(Groove* nGroove){
 	return;
 }//End destroy_groove()
 
+static int shift_left(PNMImage* array, size_t position){
+	if(!array)
+		return -1;
+	if(!array->data)
+		return -2;
+
+	for(size_t i = position; i < (array->width * array->height) - 1; ++i)
+		array->data[i] = array->data[i + 1];
+
+	return 0;
+}//End shift_left()
+
+static int remove_groove_image(PNMImage *image, Groove* nGroove){
+	if(!image)
+		return -2;
+	if(!image->data)
+		return -3;
+	if(!nGroove)
+		return -4;
+	if(!nGroove->path)
+		return -5;
+
+	if(image->width <= 0)
+		return -6;
+
+	//We are going to remove a pixel on a each line. So we reduce the width of one pixel.
+	image->width--;
+
+	size_t indexOfPixelToRemove;
+	int resultShift;
+
+	//We are going to remove each pixel contained in 'nGroove'.
+	for(size_t i = 0; i < image->height; ++i){
+
+		indexOfPixelToRemove = (nGroove->path[i].line * image->width) + nGroove->path[i].column;
+		resultShift = shift_left(image, indexOfPixelToRemove);
+		if(resultShift < 0){
+			fprintf(stderr, "** ERROR while shifting elements in remove_groove_image.\n");
+			return -1;
+		}
+
+	}
+
+	return 0;
+}//End remove_groove_image()
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	printf("Picture size : %lux%lu\n", image->width, image->height);
@@ -703,9 +761,9 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	Groove* optimalGroove = find_optimal_groove(nCostTable);
 
-	printf("Groove last coordinates = (%lu, %lu)\n", optimalGroove->path[nCostTable->height - 1].line, optimalGroove->path[nCostTable->height - 1].column);
+	//printf("Groove last coordinates = (%lu, %lu)\n", optimalGroove->path[nCostTable->height - 1].line, optimalGroove->path[nCostTable->height - 1].column);
 
-	FILE* path = fopen("path.txt", "w");
+	/*FILE* path = fopen("path.txt", "w");
 	if(path){
 		fprintf(path, "Total cost of the path : %f\n", optimalGroove->cost);
 		fprintf(path, "LINE || COLUMN\n");
@@ -715,6 +773,17 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		}
 
 		fclose(path);
+	}*/
+
+	int resultRemove = remove_groove_image(reducedImage, optimalGroove);
+	if(resultRemove < 0){
+		fprintf(stderr, "** ERROR while removing groove in image\n");
+		destroy_groove(optimalGroove);
+		destroy_cost_table(nCostTable);
+		freePNM(reducedImage);
+		return NULL;
+	}else{
+		printf("* Groove was removed from image.\n");
 	}
 
 	destroy_groove(optimalGroove);
