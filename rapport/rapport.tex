@@ -1,0 +1,64 @@
+\documentclass[a4paper, 11pt, oneside]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{array}
+\usepackage{shortvrb}
+\usepackage{listings}
+\usepackage[fleqn]{amsmath}
+\usepackage{amsfonts}
+\usepackage{fullpage}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{alltt}
+\usepackage{url}
+\usepackage{indentfirst}
+\usepackage{eurosym}
+\usepackage{listings}
+\usepackage{titlesec, blindtext, color}
+\usepackage[table,xcdraw,dvipsnames]{xcolor}
+\usepackage{a4wide}
+\usepackage{amsmath}
+\usepackage{verbatim}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{float}
+\usetikzlibrary{trees}
+\usepackage{clrscode3e}
+
+%%%% Page de garde %%%%
+
+\title{INFO-2050 : Mise en page automatique d'une bande dessinée\\Rapport}
+\author{Maxime GOFFART \\180521 \and Olivier JORIS\\182113}
+\date{2019 - 2020}
+
+\begin{document}
+\maketitle
+\newpage
+
+\setcounter{section}{3}
+
+\subsection{Approche exhaustive}
+
+\subsection{Formulation récursive de \proc{C}(i, j)}
+
+\proc{C}(i, j)= $ \left\{
+	\begin{array}{ll}
+        \text{ 0 \textit{si} i $\geq$ n \textit{et} j $\geq$ m}\\
+        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i, j-1), \proc{C}(i+1, j-1), \proc{C}(i-1,j-1)\}\textit{ sinon}.
+    \end{array}
+\right.$
+
+\subsection{Graphe des appels récursifs}
+
+\subsection{Pseudo-code du calcul du coût du sillon optimal}
+
+\subsection{Pseudo-code pour renvoyer l'image réduite de k pixels en largeur}
+
+\subsection{Complexité en temps et en espace}
+
+
+
+\end{document}
