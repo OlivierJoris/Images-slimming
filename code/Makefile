@@ -1,6 +1,6 @@
 CC=gcc
 LD=gcc
-CFLAGS=--std=c99 --pedantic -Wall -O3 -W -Wmissing-prototypes
+CFLAGS=--std=c99 --pedantic -Wall -O3 -W -Wextra -Wmissing-prototypes -g
 LDFLAGS=
 
 all: slimming
