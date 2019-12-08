@@ -220,6 +220,21 @@ static Groove* find_optimal_groove(CostTable* nCostTable);
 static void destroy_groove(Groove* nGroove);
 
 /* ------------------------------------------------------------------------- *
+ * Function to shift elements one position left from position to the end of
+ * the data attribut of image.
+ *
+ * PARAMETERS
+ * image     The image in which we need to shift elements.
+ * position  The index of the beginning of the shift.
+ *
+ * RETURN
+ * 0, shift has been realized.
+ * -1, pointer to image equals NULL.
+ * -2, pointer to data attribut of image equals NULL.
+ * ------------------------------------------------------------------------- */
+static int shift_left(PNMImage* image, size_t position);
+
+/* ------------------------------------------------------------------------- *
  * Remove Groove 'nGroove' in PNMImage 'image'.
  *
  * PARAMETERS
@@ -227,7 +242,13 @@ static void destroy_groove(Groove* nGroove);
  * nGroove  The Groove we want to remove in PNMImage 'image'.
  *
  * RETURN
- * /
+ * 0, the Groove 'nGroove' was removed from PNMImage 'image'.
+ * -1, error while shifting elements in data attribut of PNMImage.
+ * -2, pointer to image equals NULL.
+ * -3, pointer to data attribut of image equals NULL.
+ * -4, pointer to groove equals NULL.
+ * -5, pointer to path attribut in Groove equals NULL.
+ * -6, image has a width equal to 0.
  * ------------------------------------------------------------------------- */
 static int remove_groove_image(PNMImage *image, Groove* nGroove);
 
@@ -672,14 +693,14 @@ static void destroy_groove(Groove* nGroove){
 	return;
 }//End destroy_groove()
 
-static int shift_left(PNMImage* array, size_t position){
-	if(!array)
+static int shift_left(PNMImage* image, size_t position){
+	if(!image)
 		return -1;
-	if(!array->data)
+	if(!image->data)
 		return -2;
 
-	for(size_t i = position; i < (array->width * array->height) - 1; ++i)
-		array->data[i] = array->data[i + 1];
+	for(size_t i = position; i < (image->width * image->height) - 1; ++i)
+		image->data[i] = image->data[i + 1];
 
 	return 0;
 }//End shift_left()
