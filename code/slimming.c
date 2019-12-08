@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
 #include <time.h>
 
 #include "slimming.h"
@@ -13,6 +14,18 @@ typedef struct CostTable_t{
 	size_t height, width; //Height and width of the image.
 	float **table; //Table of size width * height that will store the cost of each pixel.
 }CostTable;
+
+//Structure representing the coordinates of a pixel.
+typedef struct PixelCoordinates_t{
+	size_t line; //Line index of the pixel.
+	size_t column; //Column index of the pixel.
+}PixelCoordinates;
+
+//Structure representing a groove.
+typedef struct Groove_t{
+	PixelCoordinates* path; //Array which contains the coordinates of each pixel in the groove.
+	float cost; //The cost of the groove.
+}Groove;
 
 //Differents color channels possible.
 typedef enum{
@@ -27,12 +40,12 @@ typedef enum{
  * PARAMETERS
  * image        the PNM image
  *
+ * NOTE
+ * The returned pointer should be freed using destroy_cost_table() after usage.
+ *
  * RETURN
- * >= 0, the pixel energy of the pixel (i,j).
- * -1, the image pointer equals NULL.
- * -2, the data pointer of the image equals NULL.
- * -3, the i index is bigger than the height of the image.
- * -4, the j index is bigger than the width of the image.
+ * nCostTable, pointer to the CostTable associated to the 'image'.
+ * NULL in case of error.
  * ------------------------------------------------------------------------- */
 static CostTable* compute_cost_table(const PNMImage *image);
 
@@ -142,6 +155,48 @@ static inline float min_with_three_arguments(const float firstValue, const float
  * -4, the j index is bigger than the width of the image.
  * ------------------------------------------------------------------------- */
 static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j);
+
+/* ------------------------------------------------------------------------- *
+ * Based on the pixel (currentLine, currentRow), find the pixel on the
+ * line currentLine - 1 that has the smallest cost and which is a neighbour
+ * of the pixel (currentLine, currentRow).
+ *
+ * PARAMETERS
+ * nCostTable     the CostTable.
+ * currentLine    the line index of the current pixel.
+ * currentRow     the column index of the current pixel.
+ *
+ * RETURN
+ * nvPixel        the pixel with the smallest cost and which is a neighbour
+ *                of the pixel (currentLine, currentRow).
+ * ------------------------------------------------------------------------- */
+static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow);
+
+/* ------------------------------------------------------------------------- *
+ * Find the groove with the smallest energy (cost).
+ *
+ * PARAMETERS
+ * nCostTable  The CostTable which contains the cost of each pixel.
+ *
+ * NOTE
+ * The returned pointer should be freed using destroy_groove() after usage.
+ *
+ * RETURN
+ * optimalGroove, pointer to the groove with the smallest energy (cost).
+ * NULL in case of error.
+ * ------------------------------------------------------------------------- */
+static Groove* find_optimal_groove(CostTable* nCostTable);
+
+/* ------------------------------------------------------------------------- *
+ * Free the memory of a groove.
+ *
+ * PARAMETERS
+ * nGroove  The Groove we want to free.
+ *
+ * RETURN
+ * /
+ * ------------------------------------------------------------------------- */
+static void destroy_groove(Groove* nGroove);
 
 
 static CostTable* compute_cost_table(const PNMImage *image){
@@ -291,7 +346,6 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
 
     //Extremes cases (pixel is on a edge of the image).
 
-
     if(i == image->height - 1 && j == image->width - 1){ //Bottom right corner.
         return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
                (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
@@ -420,30 +474,194 @@ static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const
     return pixel_energy(image, i, j) + min_with_three_arguments(min_cost_energy(image, i - 1, j), min_cost_energy(image, i - 1, j + 1), min_cost_energy(image, i - 1, j - 1));
 }//End min_cost_energy()
 
+static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow){
+
+	PixelCoordinates nvPixel;
+	nvPixel.line = 0;
+	nvPixel.column = 0;
+
+	if(!nCostTable || !nCostTable->table){
+		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_groove equal(s) NULL.\n");
+		return nvPixel;
+	}
+
+	if(currentLine <= 0){
+		fprintf(stderr, "** ERROR : currentRow <= 0 in find_optimal_pixel().\n");
+		return nvPixel;
+	}
+
+	nvPixel.line = currentLine - 1;
+
+	/*
+	 Based on the pixel (currentLine, currentRow), find the pixel on the line currentLine - 1
+	 that has the minimal cost and which is a neighbour of the pixel (currentLine, currentRow).
+	*/
+
+	//If the pixel (currentLine, currentRow) is on the left edge of the image.
+	if(currentRow == 0){
+		if(nCostTable->table[currentLine - 1][currentRow] < nCostTable->table[currentLine - 1][currentRow + 1])
+			nvPixel.column = currentRow;
+		else
+			nvPixel.column = currentRow + 1;
+
+		return nvPixel;
+	}
+
+	//If the pixel (currentLine, currentRow) is on the right edge of the image.
+	if(currentRow == nCostTable->width - 1){
+		if(nCostTable->table[currentLine - 1][currentRow] < nCostTable->table[currentLine - 1][currentRow - 1])
+			nvPixel.column = currentRow;
+		else
+			nvPixel.column = currentRow - 1;
+
+		return nvPixel;
+	}
+
+	//If the pixel (currentLine, currentRow) isn't on the left egde nor on the right edge.
+
+	if(nCostTable->table[currentLine - 1][currentRow - 1] < nCostTable->table[currentLine - 1][currentRow]
+	   && nCostTable->table[currentLine - 1][currentRow] < nCostTable->table[currentLine - 1][currentRow + 1]){
+
+		nvPixel.column = currentRow - 1;
+		return nvPixel;
+	}
+
+	if(nCostTable->table[currentLine - 1][currentRow] < nCostTable->table[currentLine - 1][currentRow + 1]){
+		nvPixel.column = currentRow;
+		return nvPixel;
+	}
+
+	nvPixel.column = currentRow + 1;
+	return nvPixel;
+
+}//End find_optimal_pixel()
+
+static Groove* find_optimal_groove(CostTable* nCostTable){
+	if(!nCostTable || !nCostTable->table){
+		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_groove equal(s) NULL.\n");
+		return NULL;
+	}
+
+	//Allocating the structure.
+	Groove* optimalGroove = malloc(sizeof(Groove));
+	if(!optimalGroove){
+		fprintf(stderr, "** ERROR while allocating memory for the structure in find_optimal_groove().\n");
+		return NULL;
+	}
+
+	optimalGroove->cost = 0;
+
+	/*
+	 The path of a groove will always have a length equals to the height of the image.
+	 The height of the image is equal to he height of the CostTable.
+	*/
+	optimalGroove->path = malloc(sizeof(PixelCoordinates) * nCostTable->height);
+	if(!optimalGroove->path){
+		fprintf(stderr, "** ERROR while allocating memory for the path of a Groove in find_optimal_groove.\n");
+		if(optimalGroove)
+			free(optimalGroove);
+		return NULL;
+	}
+
+	//We will work with a BOTTOM-UP approach in the CostTable.
+
+	//First we need to find the pixel with the minimum cost on the last line of the CostTable.
+
+	float minLastLine = FLT_MAX;
+	int positionLastLine = -1;
+
+	for(size_t i = 0; i < nCostTable->width; ++i){
+		//printf("%f\n", nCostTable->table[nCostTable->height - 1][i]);
+		if(nCostTable->table[nCostTable->height - 1][i] < minLastLine){
+			minLastLine = nCostTable->table[nCostTable->height - 1][i];
+			positionLastLine = i;
+		}
+	}
+
+	printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
+
+	//We need to add that pixel in the path of the Groove.
+	optimalGroove->path[nCostTable->height - 1].line = nCostTable->height - 1;
+	optimalGroove->path[nCostTable->height - 1].column = positionLastLine;
+
+	int currentLine = nCostTable->height - 2;
+
+	PixelCoordinates nvPixel;
+
+	while(currentLine >= 0){
+
+		nvPixel = find_optimal_pixel(nCostTable, currentLine + 1, optimalGroove->path[currentLine + 1].column);
+
+		optimalGroove->path[currentLine].line = currentLine;
+		optimalGroove->path[currentLine].column = nvPixel.column;
+
+		currentLine--;
+	}//End while()
+
+	optimalGroove->cost = minLastLine;
+
+	return optimalGroove;
+
+}//End find_optimal_groove()
+
+static void destroy_groove(Groove* nGroove){
+
+	if(nGroove){
+
+		if(nGroove->path)
+			free(nGroove->path);
+
+		free(nGroove);
+	}
+
+	return;
+}//End destroy_groove()
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
+
+	printf("Picture size : %lux%lu\n", image->width, image->height);
+
     //Test of the function pixel_energy()
-    printf("Energy of the pixel (%lu, %lu) : %d.\n", k, k, (int)pixel_energy(image, k, k));
+    //printf("Energy of the pixel (%lu, %lu) : %d.\n", k, k, (int)pixel_energy(image, k, k));
 
 	//Test of the function min_with_two_arguments()
-	printf("Min between 21 and 7 is : %f\n", min_with_two_arguments(21, 7));
+	//printf("Min between 21 and 7 is : %f\n", min_with_two_arguments(21, 7));
 
     //Test of the function min_with_three_arguments()
-    printf("Min between 17, 53 and %lu : %f.\n", k, min_with_three_arguments(17, 53, k));
+    //printf("Min between 17, 53 and %lu : %f.\n", k, min_with_three_arguments(17, 53, k));
 
     //Test of the function min_cost_energy()
-    printf("The min cost of the groove which stops at the pixel (%d, %d) is composed of a energy of %u.\n", 4, 4, min_cost_energy(image, 4, 4));
+    //printf("The min cost of the groove which stops at the pixel (%d, %d) is composed of a energy of %u.\n", 4, 4, min_cost_energy(image, 4, 4));
 
 	//Compute the CostTable.
-	clock_t start = clock();
+	//clock_t start = clock();
 	CostTable* nCostTable = compute_cost_table(image);
-	clock_t end = clock();
+	//clock_t end = clock();
 	if(nCostTable){
-		printf("* CostTable was constructed without issues in ");
-		printf("%lf seconds.\n", ((double) (end - start)) / CLOCKS_PER_SEC);
-		printf("Cost of the pixel (%d, %d) is %f\n", 4, 4, nCostTable->table[4][4]);
+		printf("* CostTable was constructed without issues.\n");
+		//printf("%lf seconds.\n", ((double) (end - start)) / CLOCKS_PER_SEC);
+		//printf("Cost of the pixel (%d, %d) is %f\n", 4, 4, nCostTable->table[4][4]);
 	}else{
 		printf("** ERROR while creating the CostTable.\n");
 	}
+
+	Groove* optimalGroove = find_optimal_groove(nCostTable);
+
+	printf("Groove last coordinates = (%lu, %lu)\n", optimalGroove->path[nCostTable->height - 1].line, optimalGroove->path[nCostTable->height - 1].column);
+
+	FILE* path = fopen("path.txt", "w");
+	if(path){
+		fprintf(path, "Total cost of the path : %f\n", optimalGroove->cost);
+		fprintf(path, "LINE || COLUMN\n");
+
+		for(size_t i = 0; i < image->height; ++i){
+			fprintf(path, "%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
+		}
+
+		fclose(path);
+	}
+
+	destroy_groove(optimalGroove);
 
 	destroy_cost_table(nCostTable);
 
