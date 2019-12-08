@@ -600,7 +600,7 @@ static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t current
 	nvPixel.column = 0;
 
 	if(!nCostTable || !nCostTable->table){
-		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_groove equal(s) NULL.\n");
+		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_pixel equal(s) NULL.\n");
 		return nvPixel;
 	}
 
@@ -718,6 +718,7 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	}//End while()
 
 	optimalGroove->cost = minLastLine;
+	nCostTable->table[nCostTable->height - 1][positionLastLine] = FLT_MAX; //So we don't take twice the same groove.
 
 	return optimalGroove;
 
@@ -824,8 +825,10 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 		if(!(number % 2)){
 			numberOfCostTables++;
-			if(nCostTable)
+			if(nCostTable){
 				destroy_cost_table(nCostTable);
+				nCostTable = NULL;
+			}
 			nCostTable = compute_cost_table(reducedImage);
 			if(!nCostTable){
 				fprintf(stderr, "** ERROR while creating the cost table.\n");
@@ -845,10 +848,16 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 		destroy_groove(optimalGroove);
+		optimalGroove = NULL;
 
 	}//Fin for()
 
 	printf("Number of cost tables = %lu\n", numberOfCostTables);
+
+	if(optimalGroove)
+		destroy_groove(optimalGroove);
+	if(nCostTable)
+		destroy_cost_table(nCostTable);
 
     return reducedImage;
 }//End reduceImageWidth()
