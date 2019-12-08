@@ -35,6 +35,27 @@ typedef enum{
 }colorChannel;
 
 /* ------------------------------------------------------------------------- *
+ * Copy the 'source' PNMImage into the 'destination' PNMImage.
+ *
+ * WARNING :
+ * source and destination must have the same size !
+ *
+ * PARAMETERS
+ * source         the PNM image which act as the source
+ * destination    the PNM image which act as the destination
+ *
+ * RETURN
+ * 0, source was copied successfully in destination.
+ * -1, pointer to 'source' equals NULL.
+ * -2, pointer to data attribut  of 'source' equals NULL.
+ * -3, pointer to 'destination' equals NULL.
+ * -4, pointer to data attribut of 'destination' equals NULL.
+ * -5, 'source' and 'destination' don't have the same size.
+ *
+ * ------------------------------------------------------------------------- */
+static int copy_pnm_image(const PNMImage *source, const PNMImage *destination);
+
+/* ------------------------------------------------------------------------- *
  * Compute the cost of each pixel and stores it in a CostTable.
  *
  * PARAMETERS
@@ -154,7 +175,7 @@ static inline float min_with_three_arguments(const float firstValue, const float
  * -3, the i index is bigger than the height of the image.
  * -4, the j index is bigger than the width of the image.
  * ------------------------------------------------------------------------- */
-static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j);
+//static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j);
 
 /* ------------------------------------------------------------------------- *
  * Based on the pixel (currentLine, currentRow), find the pixel on the
@@ -198,6 +219,26 @@ static Groove* find_optimal_groove(CostTable* nCostTable);
  * ------------------------------------------------------------------------- */
 static void destroy_groove(Groove* nGroove);
 
+
+static int copy_pnm_image(const PNMImage *source, const PNMImage *destination){
+	if(!source)
+		return -1;
+	if(!source->data)
+		return -2;
+	if(!destination)
+		return -3;
+	if(!destination->data)
+		return -4;
+
+	//Check if 'source' and 'destination' have the same size.
+	if(source->width != destination->width || source->height != destination->height)
+		return -5;
+
+	for(size_t i = 0; i < source->width * source->height; ++i)
+		destination->data[i] = source->data[i];
+
+	return 0;
+}//End copy_pnm_image()
 
 static CostTable* compute_cost_table(const PNMImage *image){
 	if(!image || !image->data){
@@ -446,6 +487,7 @@ static inline float min_with_three_arguments(const float firstValue, const float
     return thirdValue;
 }//End min_with_three_arguments()
 
+/* EXHAUSTIVE METHOD
 static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
         fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in min_cost_energy.\n");
@@ -473,6 +515,7 @@ static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const
     //Bottom-up approach
     return pixel_energy(image, i, j) + min_with_three_arguments(min_cost_energy(image, i - 1, j), min_cost_energy(image, i - 1, j + 1), min_cost_energy(image, i - 1, j - 1));
 }//End min_cost_energy()
+*/
 
 static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow){
 
@@ -633,16 +676,29 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
     //Test of the function min_cost_energy()
     //printf("The min cost of the groove which stops at the pixel (%d, %d) is composed of a energy of %u.\n", 4, 4, min_cost_energy(image, 4, 4));
 
-	//Compute the CostTable.
-	//clock_t start = clock();
+	//Compute the the CostTable. Dynamic programming - memoization.
 	CostTable* nCostTable = compute_cost_table(image);
-	//clock_t end = clock();
-	if(nCostTable){
+	if(nCostTable)
 		printf("* CostTable was constructed without issues.\n");
-		//printf("%lf seconds.\n", ((double) (end - start)) / CLOCKS_PER_SEC);
-		//printf("Cost of the pixel (%d, %d) is %f\n", 4, 4, nCostTable->table[4][4]);
-	}else{
+	else
 		printf("** ERROR while creating the CostTable.\n");
+
+	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
+	PNMImage* reducedImage = createPNM(image->width, image->height);
+	if(!reducedImage){
+		fprintf(stderr, "** ERROR while creating a PNMImage in reduceImageWidth.\n");
+		destroy_cost_table(nCostTable);
+		return NULL;
+	}
+
+	//Copy 'image' into 'reducedImage'.
+	int resultCopy = copy_pnm_image(image, reducedImage);
+	if(resultCopy < 0){
+		fprintf(stderr, "** ERROR while copying a PNMImage into another in reduceImageWidth.\n");
+		destroy_cost_table(nCostTable);
+		return NULL;
+	}else{
+		printf("* image was successfully copied in reducedImage\n");
 	}
 
 	Groove* optimalGroove = find_optimal_groove(nCostTable);
@@ -665,5 +721,5 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	destroy_cost_table(nCostTable);
 
-    return NULL;
+    return reducedImage;
 }//End reduceImageWidth()
