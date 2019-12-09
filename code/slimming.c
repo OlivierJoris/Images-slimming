@@ -698,7 +698,7 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 		}
 	}
 
-	printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
+	//printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
 
 	//We need to add that pixel in the path of the Groove.
 	optimalGroove->path[nCostTable->height - 1].line = nCostTable->height - 1;
@@ -721,9 +721,9 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	optimalGroove->cost = minLastLine;
 	//nCostTable->table[nCostTable->height - 1][positionLastLine] = FLT_MAX; //So we don't take twice the same groove.
 
-	for(size_t i = 0; i < nCostTable->height; ++i){
-		printf("%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
-	}
+	//for(size_t i = 0; i < nCostTable->height; ++i){
+	//	printf("%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
+	//}
 
 	return optimalGroove;
 
@@ -857,8 +857,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 
-		save_cost_table(nCostTable, "before_remove.txt");
-
 		optimalGroove = find_optimal_groove(nCostTable);
 
 		int resultRemove = remove_groove_image(reducedImage, optimalGroove);
@@ -884,10 +882,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		destroy_groove(optimalGroove);
 	if(nCostTable)
 		destroy_cost_table(nCostTable);
-
-	nCostTable = compute_cost_table(reducedImage);
-	save_cost_table(nCostTable, "after_remove.txt");
-	destroy_cost_table(nCostTable);
 
     return reducedImage;
 }//End reduceImageWidth()
