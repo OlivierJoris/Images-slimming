@@ -50,7 +50,7 @@ Soit \proc{C}(i, j), le coût en énergie du sillon optimal s'arrêtant au pixel
 
 On a : \proc{C}(i, j)= $ \left\{
 	\begin{array}{ll}
-        \proc{E}(i, j) \ \text{si} \ i = 0 \ \text{ou} \ j = 0\\
+        \proc{E}(i, j) \ \text{si} \ i = 0 \ \text{ou} \ j = 0 \ \text{ou} \ j = m\\
         \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j-1), \proc{C}(i-1, j), \proc{C}(i-1,j+1)\}\textit{ sinon}.
     \end{array}
 \right.$
