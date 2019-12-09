@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include <time.h>
+#include <string.h>
 
 #include "slimming.h"
 
@@ -697,7 +698,7 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 		}
 	}
 
-	//printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
+	printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
 
 	//We need to add that pixel in the path of the Groove.
 	optimalGroove->path[nCostTable->height - 1].line = nCostTable->height - 1;
@@ -718,7 +719,11 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	}//End while()
 
 	optimalGroove->cost = minLastLine;
-	nCostTable->table[nCostTable->height - 1][positionLastLine] = FLT_MAX; //So we don't take twice the same groove.
+	//nCostTable->table[nCostTable->height - 1][positionLastLine] = FLT_MAX; //So we don't take twice the same groove.
+
+	for(size_t i = 0; i < nCostTable->height; ++i){
+		printf("%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
+	}
 
 	return optimalGroove;
 
@@ -783,6 +788,28 @@ static int remove_groove_image(PNMImage *image, Groove* nGroove){
 	return 0;
 }//End remove_groove_image()
 
+static void save_cost_table(CostTable* nCostTable, char* filename){
+	if(!nCostTable)
+		return;
+	if(!nCostTable->table)
+		return;
+	if(!filename)
+		return;
+
+	FILE* saveFile = fopen(filename, "w");
+	if(!saveFile)
+	 	return;
+
+	for(size_t i = 0; i < nCostTable->height; ++i){
+		for(size_t j = 0; j < nCostTable->width; ++j){
+			fprintf(saveFile, "%d ", (int)nCostTable->table[i][j]);
+		}
+		fprintf(saveFile, "\n");
+	}
+	if(saveFile)
+		fclose(saveFile);
+}//End of save_cost_table()
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	printf("Picture size : %lux%lu\n", image->width, image->height);
@@ -823,19 +850,14 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	for(size_t number = 0; number < k; ++number){
 
-		if(!(number % 2)){
-			numberOfCostTables++;
-			if(nCostTable){
-				destroy_cost_table(nCostTable);
-				nCostTable = NULL;
-			}
-			nCostTable = compute_cost_table(reducedImage);
-			if(!nCostTable){
-				fprintf(stderr, "** ERROR while creating the cost table.\n");
-				freePNM(reducedImage);
-				return NULL;
-			}
+		nCostTable = compute_cost_table(reducedImage);
+		if(!nCostTable){
+			fprintf(stderr, "** ERROR while creating the cost table.\n");
+			freePNM(reducedImage);
+			return NULL;
 		}
+
+		save_cost_table(nCostTable, "before_remove.txt");
 
 		optimalGroove = find_optimal_groove(nCostTable);
 
@@ -847,8 +869,12 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			freePNM(reducedImage);
 			return NULL;
 		}
+
 		destroy_groove(optimalGroove);
+		destroy_cost_table(nCostTable);
 		optimalGroove = NULL;
+		nCostTable = NULL;
+		numberOfCostTables++;
 
 	}//Fin for()
 
@@ -858,6 +884,10 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		destroy_groove(optimalGroove);
 	if(nCostTable)
 		destroy_cost_table(nCostTable);
+
+	nCostTable = compute_cost_table(reducedImage);
+	save_cost_table(nCostTable, "after_remove.txt");
+	destroy_cost_table(nCostTable);
 
     return reducedImage;
 }//End reduceImageWidth()
