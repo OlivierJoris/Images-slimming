@@ -42,23 +42,24 @@
 
 \subsection{Approche exhaustive pour déterminer le sillon optimal}
 
-Soient \textit{n}, la hauteur de l'image, et \textit{m}, la largeur de celle-ci. Une approche exhaustive pour déterminer le sillon optimal serait d'envisager tous les sillons possibles arrivant à un pixel de la dernière ligne de l'image et de prendre celui avec le coût minimal en énergie. Pour un pixel fixé du sillon, on a 3 possibilités pour le prochain : celui directement en-dessous, celui en-dessous à gauche ou celui en-dessous à droite. Etant donné que la dernière ligne, comme toutes les autres, comporte \textit{m} pixels, on a \textit{m} potentiels pixels faisant partie du sillon optimal pour celle-ci. La complexité d'une telle approche est donc en $\Theta(m * 3^n)$.
+Soient \textit{n}, la hauteur de l'image, et \textit{m}, la largeur de celle-ci. Une approche exhaustive pour déterminer le sillon optimal serait d'envisager tous les sillons possibles arrivant à un pixel de la dernière ligne de l'image et de prendre celui avec le coût minimal en énergie. Pour un pixel fixé du sillon, on a 3 possibilités pour le prochain : celui directement en-dessous, celui en-dessous à gauche ou celui en-dessous à droite. Etant donné que la dernière ligne, comme toutes les autres, comporte \textit{m} pixels, on a \textit{m} potentiels pixels faisant partie du sillon optimal pour celle-ci. La complexité d'une telle approche est donc en $\Theta(m * 3^n)$ et est donc exponentielle par rapport à \textit{n}. 
 
 \subsection{Formulation récursive du coût d'énergie du sillon optimal}
 
-Soit \proc{C}(i, j), le coût en énergie du sillon optimal s'arrêtant au pixel (i, j).
+Soit \proc{C}(i, j), le coût en énergie du sillon optimal s'arrêtant au pixel (i, j) avec $1 \leq i \leq n$ et $1 \leq j \leq m$.
 
 On a : \proc{C}(i, j)= $ \left\{
-	\begin{array}{lll}
-		0 \ \text{si} \ i < 1 \ \text{ou} \ j < 1 \ \text{ou} \ j > m \ \text{ou} \ i > n\\
-        \proc{E}(i, j) \ \text{si} \ i = 1 \ \text{ou} \ j = 1 \ \text{ou} \ j = m\\
-        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j-1), \proc{C}(i-1, j), \proc{C}(i-1,j+1)\}\textit{ sinon}.
+	\begin{array}{llll}
+        \proc{E}(i, j) \ \text{si} \ i = 1\\
+        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j-1), \ \proc{C}(i-1, j)\} \ \text{si} \ j = m \ \text{et} \ i > 1\\
+        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j), \ \proc{C}(i-1,j+1)\} \ \text{si} \ j = 1 \ et \ i > 1\\
+        \proc{E}(i, j) $ + $ \text{min}\{ \proc{C}(i-1, j-1), \ \proc{C}(i-1, j), \ \proc{C}(i-1,j+1)\}\text{ sinon}.
     \end{array}
 \right.$
 
 \subsection{Graphe des appels récursifs}
 
-Le graphe ci-dessous représente les premiers appels récursifs pour trouver de la fonction de coût du sillon optimal s'arrêtant au pixel (i, j). 
+Le graphe ci-dessous représente les premiers appels récursifs pour trouver la fonction de coût du sillon optimal s'arrêtant au pixel (i, j). 
 
 \begin{center}
 \begin{tikzpicture}[scale = 0.85, nodes={scale = 0.45, draw, rectangle}, thick]
