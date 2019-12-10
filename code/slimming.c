@@ -372,76 +372,76 @@ static void destroy_cost_table(CostTable* nCostTable){
 	return;
 }//End of destroy_cost_table()
 
-static bool check_cost_table(CostTable* nCostTable, Groove* nGroove){
-	if(!nCostTable)
-		return -1;
-	if(!nCostTable->table)
-		return -2;
+// static bool check_cost_table(CostTable* nCostTable, Groove* nGroove){
+// 	if(!nCostTable)
+// 		return -1;
+// 	if(!nCostTable->table)
+// 		return -2;
 
-	if(!nGroove)
-		return -3;
-	if(!nGroove->path)
-		return -4;
+// 	if(!nGroove)
+// 		return -3;
+// 	if(!nGroove->path)
+// 		return -4;
 
-	/*
-	 For each line in the CostTable, verify that the element on the left and on the right
-	 of each element in the groove is equal to the element of the grove.
-	 If so, the CostTable don't need to be rebuild. Elements just need to be shifted.
-	 If not, the CostTable need to be rebuild.
-	*/
+// 	/*
+// 	 For each line in the CostTable, verify that the element on the left and on the right
+// 	 of each element in the groove is equal to the element of the grove.
+// 	 If so, the CostTable don't need to be rebuild. Elements just need to be shifted.
+// 	 If not, the CostTable need to be rebuild.
+// 	*/
 
-	size_t columnPixelGroove;
-	bool needToBeRebuild = false;
+// 	size_t columnPixelGroove;
+// 	bool needToBeRebuild = false;
 
-	for(size_t i = 0; i < nCostTable->height && !needToBeRebuild; ++i){
+// 	for(size_t i = 0; i < nCostTable->height && !needToBeRebuild; ++i){
 
-		columnPixelGroove = nGroove->path[i].column;
+// 		columnPixelGroove = nGroove->path[i].column;
 
-		if(columnPixelGroove == 0){ //The pixel of the groove is on the left edge of the image.
-			//Compare the cost of the pixel of the groove and the one on his right.
-			printf("Rentre dans if == 0.\n");
-			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1])
-				needToBeRebuild = true;
-		}
+// 		if(columnPixelGroove == 0){ //The pixel of the groove is on the left edge of the image.
+// 			//Compare the cost of the pixel of the groove and the one on his right.
+// 			printf("Rentre dans if == 0.\n");
+// 			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1])
+// 				needToBeRebuild = true;
+// 		}
 
-		if(columnPixelGroove == nCostTable->width - 1){ //The pixel of the groove is on the right edge of the image.
-			//Compare the cost of the pixel of the groove and the one on his left.
-			printf("Rentre dans if == width - 1\n");
-			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove - 1])
-				needToBeRebuild = true;
-		}
+// 		if(columnPixelGroove == nCostTable->width - 1){ //The pixel of the groove is on the right edge of the image.
+// 			//Compare the cost of the pixel of the groove and the one on his left.
+// 			printf("Rentre dans if == width - 1\n");
+// 			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove - 1])
+// 				needToBeRebuild = true;
+// 		}
 
-		if(columnPixelGroove != 0 && columnPixelGroove != nCostTable->width - 1){
-			//Compare the cost of the pixel of the groove and the one on his left and on his right.
-			printf("Rentre dans if != 0 && != width - 1\n");
-			if((nCostTable->table[i][columnPixelGroove - 1] != nCostTable->table[i][columnPixelGroove]) ||
-			   (nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1]))
-				needToBeRebuild = true;
-		}
-	}//End for()
+// 		if(columnPixelGroove != 0 && columnPixelGroove != nCostTable->width - 1){
+// 			//Compare the cost of the pixel of the groove and the one on his left and on his right.
+// 			printf("Rentre dans if != 0 && != width - 1\n");
+// 			if((nCostTable->table[i][columnPixelGroove - 1] != nCostTable->table[i][columnPixelGroove]) ||
+// 			   (nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1]))
+// 				needToBeRebuild = true;
+// 		}
+// 	}//End for()
 
-	if(needToBeRebuild)
-		return needToBeRebuild;
+// 	if(needToBeRebuild)
+// 		return needToBeRebuild;
 
-	// For each line in nCostTable, we should shift one position left every elements
-	// from the position given by nGroov up to the end of the line.
+// 	// For each line in nCostTable, we should shift one position left every elements
+// 	// from the position given by nGroov up to the end of the line.
 
 
-	size_t beginningIndexShift;
+// 	size_t beginningIndexShift;
 
-	for(size_t lineIndex = 0; lineIndex < nCostTable->height; ++lineIndex){
+// 	for(size_t lineIndex = 0; lineIndex < nCostTable->height; ++lineIndex){
 
-		beginningIndexShift = nGroove->path[lineIndex].column;
+// 		beginningIndexShift = nGroove->path[lineIndex].column;
 
-		//Shifting
-		for(size_t i = beginningIndexShift; i < nCostTable->width - 1; ++i)
-			nCostTable->table[lineIndex][i] = nCostTable->table[lineIndex][i + 1];
+// 		//Shifting
+// 		for(size_t i = beginningIndexShift; i < nCostTable->width - 1; ++i)
+// 			nCostTable->table[lineIndex][i] = nCostTable->table[lineIndex][i + 1];
 
-	}//End for()
+// 	}//End for()
 
-	return false;
+// 	return false;
 
-}//End check_cost_table()
+// }//End check_cost_table()
 
 static float pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
@@ -837,6 +837,48 @@ static void save_cost_table(CostTable* nCostTable, char* filename){
 		fclose(saveFile);
 }//End of save_cost_table()
 
+static int rebuild_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
+	if(!nCostTable)
+		return -1;
+	if(!optimalGroove)
+		return -2;
+
+	for(size_t i = optimalGroove->path[0].column; i < image->width; ++i){
+		nCostTable->table[0][i] = pixel_energy(image, 0, i);
+		if(nCostTable->table[0][i] < 0){
+			fprintf(stderr, "** ERROR while filling the first line of the CostTable in rebuild_cost_table.\n");
+			destroy_cost_table(nCostTable);
+			return -3;
+		}
+	}
+
+	//TOP-BOTTOM APPROACH to fill the CostTable.
+
+	//Start at i = 1 because the first line is already initialized.
+	//Initialized the other lines.
+
+	for(size_t i = 1; i < image->height; ++i){
+
+		//On the left edge of the image, only 2 possible values.
+		nCostTable->table[i][0] = pixel_energy(image, i, 0) +
+			min_with_two_arguments(nCostTable->table[i-1][0], nCostTable->table[i-1][1]);
+
+		//In the middle of the image.
+		for(size_t j = optimalGroove->path[i].column; j < image->width - 1; ++j){
+
+			nCostTable->table[i][j] = pixel_energy(image, i, j) +
+				min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
+		}//End for()
+
+		//On the right edge of the image, only 2 possible values.
+		nCostTable->table[i][image->width-1] = pixel_energy(image, i, image->width-1) +
+			min_with_two_arguments(nCostTable->table[i-1][image->width-1], nCostTable->table[i-1][image->width-2]);
+
+	}
+
+	return 0;
+}
+
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	printf("Picture size : %lux%lu\n", image->width, image->height);
@@ -866,9 +908,9 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		return NULL;
 	}
 
-	bool costTableNeedToBeRebuild;
+	// bool costTableNeedToBeRebuild;
 
-	size_t numberOfCostTables = 1;
+	// size_t numberOfCostTables = 1;
 
 	for(size_t number = 0; number < k; ++number){
 
@@ -883,17 +925,22 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 
-		costTableNeedToBeRebuild = check_cost_table(nCostTable, optimalGroove);
-		if(costTableNeedToBeRebuild){
-			destroy_cost_table(nCostTable);
-			nCostTable = compute_cost_table(reducedImage);
-			if(!nCostTable){
-				fprintf(stderr, "** ERROR while creating the cost table.\n");
-				destroy_groove(optimalGroove);
-				freePNM(reducedImage);
-				return NULL;
-			}
-			numberOfCostTables++;
+		// costTableNeedToBeRebuild = check_cost_table(nCostTable, optimalGroove);
+		// if(costTableNeedToBeRebuild){
+		// 	destroy_cost_table(nCostTable);
+		// 	nCostTable = compute_cost_table(reducedImage);
+		// 	if(!nCostTable){
+		// 		fprintf(stderr, "** ERROR while creating the cost table.\n");
+		// 		destroy_groove(optimalGroove);
+		// 		freePNM(reducedImage);
+		// 		return NULL;
+		// 	}
+		// 	numberOfCostTables++;
+		// }
+		int resultRebuildCostTable = rebuild_cost_table(reducedImage, nCostTable, optimalGroove);
+		if(resultRebuildCostTable < 0){
+			fprintf(stderr, "** ERROR while rebuilding the cost table.\n");
+			return NULL;
 		}
 
 		destroy_groove(optimalGroove);
@@ -901,7 +948,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	}//Fin for()
 
-	printf("Number of cost tables = %lu\n", numberOfCostTables);
+	// printf("Number of cost tables = %lu\n", numberOfCostTables);
 
 	if(optimalGroove)
 		destroy_groove(optimalGroove);
