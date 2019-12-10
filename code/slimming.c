@@ -252,6 +252,19 @@ static int shift_left(PNMImage* image, size_t position);
  * ------------------------------------------------------------------------- */
 static int remove_groove_image(PNMImage *image, Groove* nGroove);
 
+/* ------------------------------------------------------------------------- *
+ * Update the cost table after having delete a groove.
+ *
+ * PARAMETERS
+ * image      The image in which we have removed the Groove 'nGroove'.
+ * nCostTable The costTable we want to update.
+ * nGroove    The Groove we have deleted.
+ *
+ * RETURN
+ * nCostTable, the costTable updated.
+ * NULL, in case of error
+ * ------------------------------------------------------------------------- */
+static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove);
 
 static int copy_pnm_image(const PNMImage *source, const PNMImage *destination){
 	if(!source)
@@ -837,26 +850,31 @@ static void save_cost_table(CostTable* nCostTable, char* filename){
 		fclose(saveFile);
 }//End of save_cost_table()
 
-static CostTable* rebuild_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
+static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
 	if(!nCostTable)
-		return -1;
+		return NULL;
 	if(!optimalGroove)
-		return -2;
+		return NULL;
+	
+	//We have to update the cost table
+	for(size_t i = 0; i < nCostTable->height; ++i){
+		for(size_t j = optimalGroove->path[i].column; j < nCostTable->width - 1; ++j){
+			nCostTable->table[i][j] = nCostTable->table[i][j + 1];
+		}
+	}
+	
+	--nCostTable->width;
 
+	//We only update the changed values 
 	for(size_t i = optimalGroove->path[0].column; i < image->width; ++i){
 		nCostTable->table[0][i] = pixel_energy(image, 0, i);
 		if(nCostTable->table[0][i] < 0){
 			fprintf(stderr, "** ERROR while filling the first line of the CostTable in rebuild_cost_table.\n");
 			destroy_cost_table(nCostTable);
-			return -3;
+			return NULL;
 		}
 	}
-
-	//TOP-BOTTOM APPROACH to fill the CostTable.
-
-	//Start at i = 1 because the first line is already initialized.
-	//Initialized the other lines.
-
+	
 	for(size_t i = 1; i < image->height; ++i){
 
 		//On the left edge of the image, only 2 possible values.
@@ -937,7 +955,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		// 	}
 		// 	numberOfCostTables++;
 		// }
-		nCostTable = rebuild_cost_table(reducedImage, nCostTable, optimalGroove);
+		nCostTable = update_cost_table(reducedImage, nCostTable, optimalGroove);
 		if(nCostTable == NULL){
 			fprintf(stderr, "** ERROR while rebuilding the cost table.\n");
 			destroy_groove(optimalGroove);
