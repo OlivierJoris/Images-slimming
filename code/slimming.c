@@ -837,7 +837,7 @@ static void save_cost_table(CostTable* nCostTable, char* filename){
 		fclose(saveFile);
 }//End of save_cost_table()
 
-static int rebuild_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
+static CostTable* rebuild_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
 	if(!nCostTable)
 		return -1;
 	if(!optimalGroove)
@@ -876,7 +876,7 @@ static int rebuild_cost_table(PNMImage* image, CostTable* nCostTable, Groove* op
 
 	}
 
-	return 0;
+	return nCostTable;
 }
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
@@ -937,9 +937,12 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		// 	}
 		// 	numberOfCostTables++;
 		// }
-		int resultRebuildCostTable = rebuild_cost_table(reducedImage, nCostTable, optimalGroove);
-		if(resultRebuildCostTable < 0){
+		nCostTable = rebuild_cost_table(reducedImage, nCostTable, optimalGroove);
+		if(nCostTable == NULL){
 			fprintf(stderr, "** ERROR while rebuilding the cost table.\n");
+			destroy_groove(optimalGroove);
+			destroy_cost_table(nCostTable);
+			freePNM(reducedImage);
 			return NULL;
 		}
 
