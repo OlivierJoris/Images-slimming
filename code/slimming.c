@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
-#include <time.h>
-#include <string.h>
+#include <stdbool.h>
 
 #include "slimming.h"
 
@@ -373,10 +372,10 @@ static void destroy_cost_table(CostTable* nCostTable){
 	return;
 }//End of destroy_cost_table()
 
-/*static int update_cost_table(CostTable* nCostTable, Groove* nGroove){
+static bool check_cost_table(CostTable* nCostTable, Groove* nGroove){
 	if(!nCostTable)
 		return -1;
-	if(!CostTable->table)
+	if(!nCostTable->table)
 		return -2;
 
 	if(!nGroove)
@@ -384,6 +383,45 @@ static void destroy_cost_table(CostTable* nCostTable){
 	if(!nGroove->path)
 		return -4;
 
+	/*
+	 For each line in the CostTable, verify that the element on the left and on the right
+	 of each element in the groove is equal to the element of the grove.
+	 If so, the CostTable don't need to be rebuild. Elements just need to be shifted.
+	 If not, the CostTable need to be rebuild.
+	*/
+
+	size_t columnPixelGroove;
+	bool needToBeRebuild = false;
+
+	for(size_t i = 0; i < nCostTable->height && !needToBeRebuild; ++i){
+
+		columnPixelGroove = nGroove->path[i].column;
+
+		if(columnPixelGroove == 0){ //The pixel of the groove is on the left edge of the image.
+			//Compare the cost of the pixel of the groove and the one on his right.
+			printf("Rentre dans if == 0.\n");
+			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1])
+				needToBeRebuild = true;
+		}
+
+		if(columnPixelGroove == nCostTable->width - 1){ //The pixel of the groove is on the right edge of the image.
+			//Compare the cost of the pixel of the groove and the one on his left.
+			printf("Rentre dans if == width - 1\n");
+			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove - 1])
+				needToBeRebuild = true;
+		}
+
+		if(columnPixelGroove != 0 && columnPixelGroove != nCostTable->width - 1){
+			//Compare the cost of the pixel of the groove and the one on his left and on his right.
+			printf("Rentre dans if != 0 && != width - 1\n");
+			if((nCostTable->table[i][columnPixelGroove - 1] != nCostTable->table[i][columnPixelGroove]) ||
+			   (nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1]))
+				needToBeRebuild = true;
+		}
+	}//End for()
+
+	if(needToBeRebuild)
+		return needToBeRebuild;
 
 	// For each line in nCostTable, we should shift one position left every elements
 	// from the position given by nGroov up to the end of the line.
@@ -401,20 +439,9 @@ static void destroy_cost_table(CostTable* nCostTable){
 
 	}//End for()
 
+	return false;
 
-	// For each pixel in the Groove, we need to update the cost of each of his neighbours.
-	// TOP-BOTTOM APPROACH
-
-
-	//The first line is not going to change so we start at line 1 (not 0).
-	for(size_t line = 1; nCostTable->height; ++line){
-
-		for()
-	}
-
-
-
-}//End update_cost_table()*/
+}//End check_cost_table()
 
 static float pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
@@ -814,18 +841,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	printf("Picture size : %lux%lu\n", image->width, image->height);
 
-    //Test of the function pixel_energy()
-    //printf("Energy of the pixel (%lu, %lu) : %d.\n", k, k, (int)pixel_energy(image, k, k));
-
-	//Test of the function min_with_two_arguments()
-	//printf("Min between 21 and 7 is : %f\n", min_with_two_arguments(21, 7));
-
-    //Test of the function min_with_three_arguments()
-    //printf("Min between 17, 53 and %lu : %f.\n", k, min_with_three_arguments(17, 53, k));
-
-    //Test of the function min_cost_energy()
-    //printf("The min cost of the groove which stops at the pixel (%d, %d) is composed of a energy of %u.\n", 4, 4, min_cost_energy(image, 4, 4));
-
 	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
 	PNMImage* reducedImage = createPNM(image->width, image->height);
 	if(!reducedImage){
@@ -844,18 +859,18 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	Groove* optimalGroove;
 	//Compute the the CostTable. Dynamic programming - memoization.
-	CostTable* nCostTable = NULL;
+	CostTable* nCostTable = compute_cost_table(reducedImage);
+	if(!nCostTable){
+		fprintf(stderr, "** ERROR while creating the cost table.\n");
+		freePNM(reducedImage);
+		return NULL;
+	}
 
-	size_t numberOfCostTables = 0;
+	bool costTableNeedToBeRebuild;
+
+	size_t numberOfCostTables = 1;
 
 	for(size_t number = 0; number < k; ++number){
-
-		nCostTable = compute_cost_table(reducedImage);
-		if(!nCostTable){
-			fprintf(stderr, "** ERROR while creating the cost table.\n");
-			freePNM(reducedImage);
-			return NULL;
-		}
 
 		optimalGroove = find_optimal_groove(nCostTable);
 
@@ -868,11 +883,21 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 
+		costTableNeedToBeRebuild = check_cost_table(nCostTable, optimalGroove);
+		if(costTableNeedToBeRebuild){
+			destroy_cost_table(nCostTable);
+			nCostTable = compute_cost_table(reducedImage);
+			if(!nCostTable){
+				fprintf(stderr, "** ERROR while creating the cost table.\n");
+				destroy_groove(optimalGroove);
+				freePNM(reducedImage);
+				return NULL;
+			}
+			numberOfCostTables++;
+		}
+
 		destroy_groove(optimalGroove);
-		destroy_cost_table(nCostTable);
 		optimalGroove = NULL;
-		nCostTable = NULL;
-		numberOfCostTables++;
 
 	}//Fin for()
 
