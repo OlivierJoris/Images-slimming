@@ -161,23 +161,6 @@ static inline float min_with_two_arguments(const float firstValue, const float s
 static inline float min_with_three_arguments(const float firstValue, const float secondValue, const float thirdValue);
 
 /* ------------------------------------------------------------------------- *
- * Give the minimum energy cost of the groove which stops at the pixel (i,j)
- *
- * PARAMETERS
- * image        the PNM image
- * i            the line index of the pixel
- * j            the column index of the pixel
- *
- * RETURN
- * >= 0, the minimum energy cost of the groove.
- * -1, the image pointer equals NULL.
- * -2, the data pointer of the image equals NULL.
- * -3, the i index is bigger than the height of the image.
- * -4, the j index is bigger than the width of the image.
- * ------------------------------------------------------------------------- */
-//static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j);
-
-/* ------------------------------------------------------------------------- *
  * Based on the pixel (currentLine, currentRow), find the pixel on the
  * line currentLine - 1 that has the smallest cost and which is a neighbour
  * of the pixel (currentLine, currentRow).
@@ -327,22 +310,18 @@ static CostTable* compute_cost_table(const PNMImage *image){
 		}
 	}//End for()
 
-	//The first line will be filled with the energy of each pixel.
+	//We compute the cost table
 	for(size_t i = 0; i < image->width; ++i){
 		nCostTable->table[0][i] = pixel_energy(image, 0, i);
+
 		if(nCostTable->table[0][i] < 0){
-			fprintf(stderr, "** ERROR while filling the first line of the CostTable in compute_cost_table.\n");
+			fprintf(stderr, "** ERROR while filling the first line of the CostTable in update_cost_table.\n");
 			destroy_cost_table(nCostTable);
 			return NULL;
 		}
 	}
-
-	//TOP-BOTTOM APPROACH to fill the CostTable.
-
-	//Start at i = 1 because the first line is already initialized.
-	//Initialized the other lines.
+	
 	for(size_t i = 1; i < image->height; ++i){
-
 		//On the left edge of the image, only 2 possible values.
 		nCostTable->table[i][0] = pixel_energy(image, i, 0) +
 			min_with_two_arguments(nCostTable->table[i-1][0], nCostTable->table[i-1][1]);
@@ -352,14 +331,12 @@ static CostTable* compute_cost_table(const PNMImage *image){
 
 			nCostTable->table[i][j] = pixel_energy(image, i, j) +
 				min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
-
 		}//End for()
 
 		//On the right edge of the image, only 2 possible values.
 		nCostTable->table[i][image->width-1] = pixel_energy(image, i, image->width-1) +
 			min_with_two_arguments(nCostTable->table[i-1][image->width-1], nCostTable->table[i-1][image->width-2]);
-
-	}//End for()
+	}
 
 	return nCostTable;
 }//End compute_cost_table()
@@ -604,36 +581,6 @@ static inline float min_with_three_arguments(const float firstValue, const float
     return thirdValue;
 }//End min_with_three_arguments()
 
-/* EXHAUSTIVE METHOD
-static unsigned int min_cost_energy(const PNMImage *image, const size_t i, const size_t j){
-    if(!image){
-        fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in min_cost_energy.\n");
-        return -1;
-    }
-
-    if(!image->data){
-        fprintf(stderr, "** ERROR : data is not a valid pointeur (= NULL) in min_cost_energy.\n");
-        return -2;
-    }
-
-    if(i > image->height){
-        fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in min_cost_energy.\n");
-        return -3;
-    }
-
-    if(j > image->width){
-        fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in min_cost_energy.\n");
-        return -4;
-    }
-
-    if(i == 0)
-        return pixel_energy(image, i, j);
-
-    //Bottom-up approach
-    return pixel_energy(image, i, j) + min_with_three_arguments(min_cost_energy(image, i - 1, j), min_cost_energy(image, i - 1, j + 1), min_cost_energy(image, i - 1, j - 1));
-}//End min_cost_energy()
-*/
-
 static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow){
 
 	PixelCoordinates nvPixel;
@@ -828,27 +775,27 @@ static int remove_groove_image(PNMImage *image, Groove* nGroove){
 	return 0;
 }//End remove_groove_image()
 
-static void save_cost_table(CostTable* nCostTable, char* filename){
-	if(!nCostTable)
-		return;
-	if(!nCostTable->table)
-		return;
-	if(!filename)
-		return;
+// static void save_cost_table(CostTable* nCostTable, char* filename){
+// 	if(!nCostTable)
+// 		return;
+// 	if(!nCostTable->table)
+// 		return;
+// 	if(!filename)
+// 		return;
 
-	FILE* saveFile = fopen(filename, "w");
-	if(!saveFile)
-	 	return;
+// 	FILE* saveFile = fopen(filename, "w");
+// 	if(!saveFile)
+// 	 	return;
 
-	for(size_t i = 0; i < nCostTable->height; ++i){
-		for(size_t j = 0; j < nCostTable->width; ++j){
-			fprintf(saveFile, "%d ", (int)nCostTable->table[i][j]);
-		}
-		fprintf(saveFile, "\n");
-	}
-	if(saveFile)
-		fclose(saveFile);
-}//End of save_cost_table()
+// 	for(size_t i = 0; i < nCostTable->height; ++i){
+// 		for(size_t j = 0; j < nCostTable->width; ++j){
+// 			fprintf(saveFile, "%d ", (int)nCostTable->table[i][j]);
+// 		}
+// 		fprintf(saveFile, "\n");
+// 	}
+// 	if(saveFile)
+// 		fclose(saveFile);
+// }//End of save_cost_table()
 
 static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
 	if(!nCostTable)
@@ -865,33 +812,48 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 	
 	--nCostTable->width;
 
+	size_t firstColumn = optimalGroove->path[0].column;
+
 	//We only update the changed values 
-	for(size_t i = optimalGroove->path[0].column; i < image->width; ++i){
-		nCostTable->table[0][i] = pixel_energy(image, 0, i);
-		if(nCostTable->table[0][i] < 0){
-			fprintf(stderr, "** ERROR while filling the first line of the CostTable in rebuild_cost_table.\n");
-			destroy_cost_table(nCostTable);
-			return NULL;
-		}
-	}
-	
-	for(size_t i = 1; i < image->height; ++i){
+	for(size_t i = 0; i < image->height; ++i){
 
-		//On the left edge of the image, only 2 possible values.
-		nCostTable->table[i][0] = pixel_energy(image, i, 0) +
-			min_with_two_arguments(nCostTable->table[i-1][0], nCostTable->table[i-1][1]);
+		for(size_t j = firstColumn - i; j < image->width && j < firstColumn + i; ++j){
 
-		//In the middle of the image.
-		for(size_t j = optimalGroove->path[i].column; j < image->width - 1; ++j){
+			//On the left edge of the image, only 2 possible values.
+			if(j == 0){
+				nCostTable->table[i][j] = pixel_energy(image, i, j) +
+					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1]);
 
+				if(nCostTable->table[i][j] < 0){
+					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
+					destroy_cost_table(nCostTable);
+					return NULL;
+				}
+			}
+
+			//In the middle of the image.
 			nCostTable->table[i][j] = pixel_energy(image, i, j) +
 				min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
+
+			if(nCostTable->table[i][j] < 0){
+				fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
+				destroy_cost_table(nCostTable);
+				return NULL;
+			}
+			
+			//On the right edge of the image, only 2 possible values.
+			if(j == image->width - 1){
+				nCostTable->table[i][j] = pixel_energy(image, i, j) +
+					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j-1]);
+				
+				if(nCostTable->table[i][j] < 0){
+					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
+					destroy_cost_table(nCostTable);
+					return NULL;
+				}
+			}
+			
 		}//End for()
-
-		//On the right edge of the image, only 2 possible values.
-		nCostTable->table[i][image->width-1] = pixel_energy(image, i, image->width-1) +
-			min_with_two_arguments(nCostTable->table[i-1][image->width-1], nCostTable->table[i-1][image->width-2]);
-
 	}
 
 	return nCostTable;
