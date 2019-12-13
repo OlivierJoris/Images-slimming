@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
+#include <math.h>
 #include <stdbool.h>
 
 #include "slimming.h"
@@ -482,48 +483,48 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
     //Extremes cases (pixel is on a edge of the image).
 
     if(i == image->height - 1 && j == image->width - 1){ //Bottom right corner.
-        return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
-               (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
+        return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
+               (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
 
     if(i == 0 && j == 0){ //Top left corner.
-        return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-               (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
+        return (fabs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+               (fabs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
     if(i == 0 && j == image->width - 1){ //Top right corner.
-        return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-               (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
+        return (fabs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+               (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
 
     if(i == image->height - 1 && j == 0){ //Bottom left corner.
-        return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
-               (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
+        return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
+               (fabs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
     if(i == 0 && j < image->width - 1 && j > 0){ //Top.
-        return (abs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-               (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
+        return (fabs(color_value(image, i, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+               (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
     if(i == image->height - 1 && j < image->width - 1 && j > 0){ //Bottom.
-        return (abs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
-               (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
+        return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
+               (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
     if(j == 0 && i < image->height - 1 && i > 0){ //Left.
-        return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-               (abs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
+        return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+               (fabs(color_value(image, i, j, channel) - color_value(image, i, j + 1, channel)) / 2);
     }
 
     if(j == image->width - 1 && i < image->height - 1 && i > 0){ //Right.
-        return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-               (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
+        return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+               (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j, channel)) / 2);
     }
 
     //If the pixel isn't on a egde of the image.
-    return (abs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
-           (abs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
+    return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i + 1, j, channel)) / 2) +
+           (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
 }//End color_energy()
 
 static int color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
@@ -802,7 +803,7 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 		return NULL;
 	if(!optimalGroove)
 		return NULL;
-	
+
 	//We have to update the cost table
 	for(size_t i = 0; i < nCostTable->height; ++i){
 		for(size_t j = optimalGroove->path[i].column; j < nCostTable->width - 1; ++j){
@@ -812,12 +813,22 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 	
 	--nCostTable->width;
 
-	size_t firstColumn = optimalGroove->path[0].column;
+	int firstColumn = optimalGroove->path[0].column;
+	
+	//First line
+	if(firstColumn >= (int) image->width)
+		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, image->width - 1);
 
-	//We only update the changed values 
-	for(size_t i = 0; i < image->height; ++i){
+	if(firstColumn < 0)
+		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, 0);
 
-		for(size_t j = firstColumn - i; j < image->width && j < firstColumn + i; ++j){
+	if(firstColumn >= 0 && firstColumn < (int) image->width)
+		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, firstColumn);
+		
+	//We only update the changed values.
+	for(size_t i = 1; i < image->height; ++i){
+
+		for(size_t j = firstColumn - i; j < image->width && j <= firstColumn + i; ++j){
 
 			//On the left edge of the image, only 2 possible values.
 			if(j == 0){
@@ -831,14 +842,16 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 				}
 			}
 
-			//In the middle of the image.
-			nCostTable->table[i][j] = pixel_energy(image, i, j) +
-				min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
+			if(j != 0 && j != image->width - 1){
+				//In the middle of the image.
+				nCostTable->table[i][j] = pixel_energy(image, i, j) +
+					min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
 
-			if(nCostTable->table[i][j] < 0){
-				fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
-				destroy_cost_table(nCostTable);
-				return NULL;
+				if(nCostTable->table[i][j] < 0){
+					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
+					destroy_cost_table(nCostTable);
+					return NULL;
+				}
 			}
 			
 			//On the right edge of the image, only 2 possible values.
@@ -852,7 +865,6 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 					return NULL;
 				}
 			}
-			
 		}//End for()
 	}
 
