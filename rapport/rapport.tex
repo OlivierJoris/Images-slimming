@@ -40,13 +40,14 @@
 
 \setcounter{section}{3}
 
-Dans ce rapport, on considère que \id{m} est la largeur et \id{n} est la hauteur d'une image.
+Dans ce rapport, on considère que \id{m} est la largeur et \id{n} est la hauteur d'une image.\\
+Dans le pseudo-code des parties 3.4 et 3.5, nous avons retiré les vérifications des retours des différentes fonctions pour ne pas alourdir la lecture du pseudo-code.
 
 \subsection{Approche exhaustive pour déterminer le sillon optimal}
 
 Une approche exhaustive pour déterminer le sillon optimal serait d'envisager tous les sillons possibles arrivant à un pixel de la dernière ligne de l'image et de prendre celui avec le coût minimal en énergie. Pour un pixel fixé du sillon, on a 3 possibilités pour le prochain : celui directement au-dessus, celui au-dessus à gauche ou celui au-dessus à droite. Étant donné que la dernière ligne, comme toutes les autres, comporte \textit{m} pixels, on a \textit{m} potentiels pixels faisant partie du sillon optimal pour celle-ci. La complexité d'une telle approche est donc en $\Theta(m * 3^n)$ et est donc exponentielle par rapport à \textit{n}. 
 
-\subsection{Formulation récursive du coût d'énergie du sillon optimal}
+\subsection{Formulation récursive du coût du sillon optimal}
 
 Soit \proc{C}(i, j), le coût en énergie du sillon optimal s'arrêtant au pixel (i, j) avec $1 \leq i \leq n$ et $1 \leq j \leq m$.
 
@@ -101,7 +102,7 @@ Si on continue la construction de ce graphe, celui-ci croît exponentiellement j
 
 \subsection{Pseudo-code du calcul du coût du sillon optimal}
 
-La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts dont l'élément (i, j) renseigne sur le coût du pixel (i,j).\\La fonction \proc{find\_optimal\_pixel} prend en arguments la table des coûts, un indice de colonne et un indice de ligne. Cette fonction renvoie un pixel optimal à ajouter dans le sillon sur base du dernier pixel ajouté dans le sillon (dont les coordonnées sont passées en paramètres de la fonction).
+La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts dont l'élément (i, j) renseigne sur le coût du pixel (i,j) et renvoie le sillon optimal.\\La fonction \proc{find\_optimal\_pixel} prend en arguments la table des coûts, un indice de colonne et un indice de ligne. Cette fonction renvoie un pixel optimal à ajouter dans le sillon sur base du dernier pixel ajouté dans le sillon (dont les coordonnées sont passées en paramètres de la fonction).
 
 \begin{codebox} %%Explication du package : https://www.cs.dartmouth.edu/~thc/clrscode
         \Procname{$\proc{find\_optimal\_groove}(cTable)$}
@@ -113,9 +114,9 @@ La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts 
         \li
         \li \For $i \gets 1$ \To $m \text{ }\Comment \text{Trouver le pixel avec le plus petit coût sur la dernière ligne}$
                 \Do
-        \li     	\If $\id{cTable}[\attrib{nTable}{height}][i] < \id{minLastLine}$
+        \li     	\If $\id{cTable}[\attrib{cTable}{height}][i] < \id{minLastLine}$
         \li 			\Then
-        					$\id{minLastLine} \gets \id{cTable}[\attrib{nTable}{height}][i]$
+        					$\id{minLastLine} \gets \id{cTable}[\attrib{cTable}{height}][i]$
         	\li				$\id{positionLastLine} \gets i$
         				\End
                 \End
@@ -123,7 +124,7 @@ La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts 
         \li $\attrib{\id{optimalGroove}[\attrib{cTable}{height}]}{line} \gets \attrib{cTable}{height}$
         \li $\attrib{\id{optimalGroove}[\attrib{cTable}{height}]}{column} \gets \id{positionLastLine}$
         \li
-        \li \Comment Nous devons ajouter les pixels restants pour rejoindre le haut de l'image depuis le bas.
+        \li \Comment Nous devons ajouter les pixels voisins avec les plus petits coûts au sillon pour rejoindre\\ \hspace {0.3cm} le haut de l'image depuis le bas.
         \li $\id{currentLine} \gets \attrib{cTable}{height} - 1$
         \li $\id{nvPixel} \gets$ "Create a new pixel"
         \li
@@ -145,7 +146,7 @@ La fonction qui retourne l'image réduite de \id{k} pixels en largeur est la fon
 La fonction \proc{copy\_pnm\_image}(source, dest) permet de copier l'image \id{source} dans l'image \id{dest}. On fait ceci dans le pseudo-code qui va suivre pour ne pas modifier l'image de départ.\\
 La fonction \proc{compute\_cost\_table}(image) permet de calculer la table des coûts associés à chaque pixel de l'image passée en paramètre. L'élément (i, j) de la table correspond au coût associé au pixel (i, j) de l'image.\\
 La fonction \proc{remove\_groove\_image}(source, groove) permet de retirer le sillon \id{groove} de l'image \id{source}.\\
-La fonction \proc{update\_cost\_table}(image, costTable, groove) permet de mettre à jour la table des coûts \id{costTable} sur base du sillon \id{groove} qui a été retiré de l'image.
+La fonction \proc{update\_cost\_table}(image, costTable, groove) permet de mettre à jour la table des coûts \id{costTable} sur base du sillon \id{groove} qui a été retiré de l'image sans la recalculer entièrement.
 
 \begin{codebox} %%Explication du package : https://www.cs.dartmouth.edu/~thc/clrscode
         \Procname{$\proc{reduceImageWidth}(image, k)$}
@@ -164,7 +165,7 @@ La fonction \proc{update\_cost\_table}(image, costTable, groove) permet de mettr
         \li \Return \id{reducedImage}
 \end{codebox}
 
-Les lignes 1 et 2 nous permettent d'obtenir une copie de l'image qu'on va manipuler pour ne pas modifier l'image source.
+Les lignes 1 et 2 nous permettent d'obtenir une copie de l'image qu'on va manipuler pour ne pas modifier l'image source. C'est cette copie que la fonction va retournée.
 A la ligne 4, on calcule la table des coûts qui va être utile pour trouver les sillons qu'on doit supprimer de l'image. La table des coûts est la mémoïsation de l'approche par programmation dynamique.\\
 La ligne 7 permet de trouver le sillon optimal. Cette fonction a été expliquée en détail au point précédent. La ligne 8 nous permet de retirer de l'image les pixels se trouvant dans le sillon optimal. Ensuite, la ligne 9 met à jour la table des coûts sans la recalculer entièrement. On réalise les lignes 7 à 9 un nombre \id{k} de fois avec \id{k} qui correspond aux nombres de pixels qu'on souhaite retirer de la largeur de l'image.
 
@@ -178,7 +179,7 @@ On a toujours \id{n} qui est la hauteur et \id{m} qui est la largeur de l'image.
         \li
 	    \li \For $number \gets 1$ \To \id{k} \Comment \id{k} $\times$
                 \Do
-         \li    	\id{optimalGroove} $\gets$ \func{find\_optimal\_groove}(nCostTable) \Comment $\Theta(\id{n} \times \id{m})$
+         \li    	\id{optimalGroove} $\gets$ \func{find\_optimal\_groove}(nCostTable) \Comment $\Theta(\id{n} + \id{m})$
          \li		\func{remove\_groove\_image}(reducedImage, optimalGroove) \Comment $\mathcal{O}(\id{n} \times \id{m})$
          \li		\id{nCostTable} $\gets$ \func{update\_cost\_table}(reducedImage, nCostTable, optimalGroove) \Comment $\mathcal{O}(\id{n} \times \id{m})$
                 \End
@@ -186,12 +187,12 @@ On a toujours \id{n} qui est la hauteur et \id{m} qui est la largeur de l'image.
         \li \Return \id{reducedImage} \Comment $\Theta(1)$
 \end{codebox}
 
-Si on additionne les complexités temporelles, on obtient $\mathcal{O}((2+3\id{k})(\id{n} \times \id{m}) + 2)$pour la complexité en temps.\\
+Si on additionne les complexités temporelles, on obtient $\mathcal{O}((2+2\id{k})(\id{n} \times \id{m}) + \id{k} \times (\id{n} + \id{m}) + 2)$pour la complexité en temps.\\
 \\
 \noindent Concernant les complexités spatiales :
 
 \begin{enumerate}
-	\item[$\bullet$] Stocker la copie de l'image représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
+	\item[$\bullet$] Stocker la copie de l'image qu'on va retournée représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
 	\item[$\bullet$] Stocker la table des coûts représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
 	\item[$\bullet$] Stocker le sillon optimal représente une complexité spatiale de $\Theta(\id{n})$.
 \end{enumerate}
