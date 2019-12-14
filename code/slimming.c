@@ -10,6 +10,12 @@
 
 #include "slimming.h"
 
+/* ------------------------------------------------------------------------- *
+ *
+ * STRUCTURES
+ *
+ * ------------------------------------------------------------------------- */
+
 //Structure representing a table which will store the cost of each pixel.
 typedef struct CostTable_t{
 	size_t height, width; //Height and width of the image.
@@ -24,7 +30,7 @@ typedef struct PixelCoordinates_t{
 
 //Structure representing a groove.
 typedef struct Groove_t{
-	PixelCoordinates* path; //Array which contains the coordinates of each pixel in the groove.
+	PixelCoordinates *path; //Array which contains the coordinates of each pixel in the groove.
 	float cost; //The cost of the groove.
 }Groove;
 
@@ -34,6 +40,12 @@ typedef enum{
     green,
     blue
 }colorChannel;
+
+/* ------------------------------------------------------------------------- *
+ *
+ * PROTOTYPES OF STATIC FUNCTIONS
+ *
+ * ------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------- *
  * Copy the 'source' PNMImage into the 'destination' PNMImage.
@@ -46,7 +58,7 @@ typedef enum{
  * destination    the PNM image which act as the destination
  *
  * RETURN
- * 0, source was copied successfully in destination.
+ * 0, source was successfully copied into destination.
  * -1, pointer to 'source' equals NULL.
  * -2, pointer to data attribut  of 'source' equals NULL.
  * -3, pointer to 'destination' equals NULL.
@@ -134,7 +146,7 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
  * -4, the j index is bigger than the width of the image.
  * -5, the channel doesn't exist.
  * ------------------------------------------------------------------------- */
-static int color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel);
+static float color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel);
 
 /* ------------------------------------------------------------------------- *
  * Give the minimum between 2 values
@@ -175,7 +187,7 @@ static inline float min_with_three_arguments(const float firstValue, const float
  * nvPixel        the pixel with the smallest cost and which is a neighbour
  *                of the pixel (currentLine, currentRow).
  * ------------------------------------------------------------------------- */
-static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow);
+static PixelCoordinates find_optimal_pixel(const CostTable* nCostTable, const size_t currentLine, const size_t currentRow);
 
 /* ------------------------------------------------------------------------- *
  * Find the groove with the smallest energy (cost).
@@ -190,7 +202,7 @@ static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t current
  * optimalGroove, pointer to the groove with the smallest energy (cost).
  * NULL in case of error.
  * ------------------------------------------------------------------------- */
-static Groove* find_optimal_groove(CostTable* nCostTable);
+static Groove* find_optimal_groove(const CostTable* nCostTable);
 
 /* ------------------------------------------------------------------------- *
  * Free the memory of a groove.
@@ -216,39 +228,45 @@ static void destroy_groove(Groove* nGroove);
  * -1, pointer to image equals NULL.
  * -2, pointer to data attribut of image equals NULL.
  * ------------------------------------------------------------------------- */
-static int shift_left(PNMImage* image, size_t position);
+static int shift_left(PNMImage* image, const size_t position);
 
 /* ------------------------------------------------------------------------- *
  * Remove Groove 'nGroove' in PNMImage 'image'.
  *
  * PARAMETERS
  * image    The image in which we want to remove the Groove 'nGroove'.
- * nGroove  The Groove we want to remove in PNMImage 'image'.
+ * nGroove  The Groove we want to remove from PNMImage 'image'.
  *
  * RETURN
  * 0, the Groove 'nGroove' was removed from PNMImage 'image'.
  * -1, error while shifting elements in data attribut of PNMImage.
  * -2, pointer to image equals NULL.
  * -3, pointer to data attribut of image equals NULL.
- * -4, pointer to groove equals NULL.
+ * -4, pointer to nGroove equals NULL.
  * -5, pointer to path attribut in Groove equals NULL.
  * -6, image has a width equal to 0.
  * ------------------------------------------------------------------------- */
-static int remove_groove_image(PNMImage *image, Groove* nGroove);
+static int remove_groove_image(PNMImage *image, const Groove* nGroove);
 
 /* ------------------------------------------------------------------------- *
- * Update the cost table after having delete a groove.
+ * Update the cost table after removing a Groove.
  *
  * PARAMETERS
  * image      The image in which we have removed the Groove 'nGroove'.
  * nCostTable The costTable we want to update.
- * nGroove    The Groove we have deleted.
+ * nGroove    The Groove we have removed from the image.
  *
  * RETURN
  * nCostTable, the costTable updated.
  * NULL, in case of error
  * ------------------------------------------------------------------------- */
-static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove);
+static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable, const Groove* optimalGroove);
+
+/* ------------------------------------------------------------------------- *
+ *
+ * IMPLEMENTATION
+ *
+ * ------------------------------------------------------------------------- */
 
 static int copy_pnm_image(const PNMImage *source, const PNMImage *destination){
 	if(!source)
@@ -312,17 +330,20 @@ static CostTable* compute_cost_table(const PNMImage *image){
 	}//End for()
 
 	//We compute the cost table
+	//We fill the first line.
 	for(size_t i = 0; i < image->width; ++i){
 		nCostTable->table[0][i] = pixel_energy(image, 0, i);
 
 		if(nCostTable->table[0][i] < 0){
-			fprintf(stderr, "** ERROR while filling the first line of the CostTable in update_cost_table.\n");
+			fprintf(stderr, "** ERROR while filling the first line of the CostTable in compute_cost_table.\n");
 			destroy_cost_table(nCostTable);
 			return NULL;
 		}
 	}
-	
+
+	//We fill the other lines.
 	for(size_t i = 1; i < image->height; ++i){
+
 		//On the left edge of the image, only 2 possible values.
 		nCostTable->table[i][0] = pixel_energy(image, i, 0) +
 			min_with_two_arguments(nCostTable->table[i-1][0], nCostTable->table[i-1][1]);
@@ -362,77 +383,6 @@ static void destroy_cost_table(CostTable* nCostTable){
 
 	return;
 }//End of destroy_cost_table()
-
-// static bool check_cost_table(CostTable* nCostTable, Groove* nGroove){
-// 	if(!nCostTable)
-// 		return -1;
-// 	if(!nCostTable->table)
-// 		return -2;
-
-// 	if(!nGroove)
-// 		return -3;
-// 	if(!nGroove->path)
-// 		return -4;
-
-// 	/*
-// 	 For each line in the CostTable, verify that the element on the left and on the right
-// 	 of each element in the groove is equal to the element of the grove.
-// 	 If so, the CostTable don't need to be rebuild. Elements just need to be shifted.
-// 	 If not, the CostTable need to be rebuild.
-// 	*/
-
-// 	size_t columnPixelGroove;
-// 	bool needToBeRebuild = false;
-
-// 	for(size_t i = 0; i < nCostTable->height && !needToBeRebuild; ++i){
-
-// 		columnPixelGroove = nGroove->path[i].column;
-
-// 		if(columnPixelGroove == 0){ //The pixel of the groove is on the left edge of the image.
-// 			//Compare the cost of the pixel of the groove and the one on his right.
-// 			printf("Rentre dans if == 0.\n");
-// 			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1])
-// 				needToBeRebuild = true;
-// 		}
-
-// 		if(columnPixelGroove == nCostTable->width - 1){ //The pixel of the groove is on the right edge of the image.
-// 			//Compare the cost of the pixel of the groove and the one on his left.
-// 			printf("Rentre dans if == width - 1\n");
-// 			if(nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove - 1])
-// 				needToBeRebuild = true;
-// 		}
-
-// 		if(columnPixelGroove != 0 && columnPixelGroove != nCostTable->width - 1){
-// 			//Compare the cost of the pixel of the groove and the one on his left and on his right.
-// 			printf("Rentre dans if != 0 && != width - 1\n");
-// 			if((nCostTable->table[i][columnPixelGroove - 1] != nCostTable->table[i][columnPixelGroove]) ||
-// 			   (nCostTable->table[i][columnPixelGroove] != nCostTable->table[i][columnPixelGroove + 1]))
-// 				needToBeRebuild = true;
-// 		}
-// 	}//End for()
-
-// 	if(needToBeRebuild)
-// 		return needToBeRebuild;
-
-// 	// For each line in nCostTable, we should shift one position left every elements
-// 	// from the position given by nGroov up to the end of the line.
-
-
-// 	size_t beginningIndexShift;
-
-// 	for(size_t lineIndex = 0; lineIndex < nCostTable->height; ++lineIndex){
-
-// 		beginningIndexShift = nGroove->path[lineIndex].column;
-
-// 		//Shifting
-// 		for(size_t i = beginningIndexShift; i < nCostTable->width - 1; ++i)
-// 			nCostTable->table[lineIndex][i] = nCostTable->table[lineIndex][i + 1];
-
-// 	}//End for()
-
-// 	return false;
-
-// }//End check_cost_table()
 
 static float pixel_energy(const PNMImage *image, const size_t i, const size_t j){
     if(!image){
@@ -527,7 +477,7 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
            (fabs(color_value(image, i, j - 1, channel) - color_value(image, i, j + 1, channel)) / 2);
 }//End color_energy()
 
-static int color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
+static float color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
     if(!image){
         fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in color_value.\n");
         return -1;
@@ -582,7 +532,7 @@ static inline float min_with_three_arguments(const float firstValue, const float
     return thirdValue;
 }//End min_with_three_arguments()
 
-static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t currentLine, size_t currentRow){
+static PixelCoordinates find_optimal_pixel(const CostTable* nCostTable, const size_t currentLine, const size_t currentRow){
 
 	PixelCoordinates nvPixel;
 	nvPixel.line = 0;
@@ -594,7 +544,7 @@ static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t current
 	}
 
 	if(currentLine <= 0){
-		fprintf(stderr, "** ERROR : currentRow <= 0 in find_optimal_pixel().\n");
+		fprintf(stderr, "** ERROR : currentLine <= 0 in find_optimal_pixel().\n");
 		return nvPixel;
 	}
 
@@ -644,7 +594,7 @@ static PixelCoordinates find_optimal_pixel(CostTable* nCostTable, size_t current
 
 }//End find_optimal_pixel()
 
-static Groove* find_optimal_groove(CostTable* nCostTable){
+static Groove* find_optimal_groove(const CostTable* nCostTable){
 	if(!nCostTable || !nCostTable->table){
 		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_groove equal(s) NULL.\n");
 		return NULL;
@@ -653,7 +603,7 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	//Allocating the structure.
 	Groove* optimalGroove = malloc(sizeof(Groove));
 	if(!optimalGroove){
-		fprintf(stderr, "** ERROR while allocating memory for the structure in find_optimal_groove().\n");
+		fprintf(stderr, "** ERROR while allocating memory for the structure in find_optimal_groove.\n");
 		return NULL;
 	}
 
@@ -679,14 +629,11 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	int positionLastLine = -1;
 
 	for(size_t i = 0; i < nCostTable->width; ++i){
-		//printf("%f\n", nCostTable->table[nCostTable->height - 1][i]);
 		if(nCostTable->table[nCostTable->height - 1][i] < minLastLine){
 			minLastLine = nCostTable->table[nCostTable->height - 1][i];
 			positionLastLine = i;
 		}
 	}
-
-	//printf("The minimum in the last line is on position %d with a total cost of %f\n", positionLastLine, minLastLine);
 
 	//We need to add that pixel in the path of the Groove.
 	optimalGroove->path[nCostTable->height - 1].line = nCostTable->height - 1;
@@ -707,14 +654,8 @@ static Groove* find_optimal_groove(CostTable* nCostTable){
 	}//End while()
 
 	optimalGroove->cost = minLastLine;
-	//nCostTable->table[nCostTable->height - 1][positionLastLine] = FLT_MAX; //So we don't take twice the same groove.
-
-	//for(size_t i = 0; i < nCostTable->height; ++i){
-	//	printf("%lu || %lu\n", optimalGroove->path[i].line, optimalGroove->path[i].column);
-	//}
 
 	return optimalGroove;
-
 }//End find_optimal_groove()
 
 static void destroy_groove(Groove* nGroove){
@@ -730,7 +671,7 @@ static void destroy_groove(Groove* nGroove){
 	return;
 }//End destroy_groove()
 
-static int shift_left(PNMImage* image, size_t position){
+static int shift_left(PNMImage* image, const size_t position){
 	if(!image)
 		return -1;
 	if(!image->data)
@@ -742,7 +683,7 @@ static int shift_left(PNMImage* image, size_t position){
 	return 0;
 }//End shift_left()
 
-static int remove_groove_image(PNMImage *image, Groove* nGroove){
+static int remove_groove_image(PNMImage *image, const Groove* nGroove){
 	if(!image)
 		return -2;
 	if(!image->data)
@@ -765,6 +706,7 @@ static int remove_groove_image(PNMImage *image, Groove* nGroove){
 	for(size_t i = 0; i < image->height; ++i){
 
 		indexOfPixelToRemove = (nGroove->path[i].line * image->width) + nGroove->path[i].column;
+
 		resultShift = shift_left(image, indexOfPixelToRemove);
 		if(resultShift < 0){
 			fprintf(stderr, "** ERROR while shifting elements in remove_groove_image.\n");
@@ -776,59 +718,41 @@ static int remove_groove_image(PNMImage *image, Groove* nGroove){
 	return 0;
 }//End remove_groove_image()
 
-// static void save_cost_table(CostTable* nCostTable, char* filename){
-// 	if(!nCostTable)
-// 		return;
-// 	if(!nCostTable->table)
-// 		return;
-// 	if(!filename)
-// 		return;
-
-// 	FILE* saveFile = fopen(filename, "w");
-// 	if(!saveFile)
-// 	 	return;
-
-// 	for(size_t i = 0; i < nCostTable->height; ++i){
-// 		for(size_t j = 0; j < nCostTable->width; ++j){
-// 			fprintf(saveFile, "%d ", (int)nCostTable->table[i][j]);
-// 		}
-// 		fprintf(saveFile, "\n");
-// 	}
-// 	if(saveFile)
-// 		fclose(saveFile);
-// }//End of save_cost_table()
-
-static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groove* optimalGroove){
+static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable, const Groove* optimalGroove){
 	if(!nCostTable)
 		return NULL;
 	if(!optimalGroove)
 		return NULL;
 
-	//We have to update the cost table
+	//We have to update the cost table.
+
+	//We shift elements of one position left (beginning at the groove column) on each line of the table.
 	for(size_t i = 0; i < nCostTable->height; ++i){
 		for(size_t j = optimalGroove->path[i].column; j < nCostTable->width - 1; ++j){
 			nCostTable->table[i][j] = nCostTable->table[i][j + 1];
 		}
 	}
-	
-	--nCostTable->width;
 
-	int firstColumn = optimalGroove->path[0].column;
-	
+	--nCostTable->width; //We reduced the table of one pixel on each line.
+
+	size_t firstColumn = optimalGroove->path[0].column;
+
 	//First line
-	if(firstColumn >= (int) image->width)
+	if(firstColumn >= image->width)
 		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, image->width - 1);
-
-	if(firstColumn < 0)
-		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, 0);
-
-	if(firstColumn >= 0 && firstColumn < (int) image->width)
+	else
 		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, firstColumn);
-		
-	//We only update the changed values.
-	for(size_t i = 1; i < image->height; ++i){
 
-		for(size_t j = firstColumn - i; j < image->width && j <= firstColumn + i; ++j){
+	int j = 0; //Must be int because it can be < 0 and size_t is an unsigned type.
+
+	//We only update the changed values. Represent a cone beginning at the first pixel of the groove.
+	for(int i = 1; i < (int)image->height; ++i){
+
+		j = (int)firstColumn - i;
+		if(j < 0)
+			j = 0;
+
+		for(; j < (int)image->width && j <= (int)firstColumn + i; ++j){
 
 			//On the left edge of the image, only 2 possible values.
 			if(j == 0){
@@ -842,7 +766,7 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 				}
 			}
 
-			if(j != 0 && j != image->width - 1){
+			if(j != 0 && j != (int)image->width - 1){
 				//In the middle of the image.
 				nCostTable->table[i][j] = pixel_energy(image, i, j) +
 					min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
@@ -853,12 +777,12 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 					return NULL;
 				}
 			}
-			
+
 			//On the right edge of the image, only 2 possible values.
-			if(j == image->width - 1){
+			if(j == (int)image->width - 1){
 				nCostTable->table[i][j] = pixel_energy(image, i, j) +
 					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j-1]);
-				
+
 				if(nCostTable->table[i][j] < 0){
 					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
 					destroy_cost_table(nCostTable);
@@ -869,7 +793,7 @@ static CostTable* update_cost_table(PNMImage* image, CostTable* nCostTable, Groo
 	}
 
 	return nCostTable;
-}
+}//End update_cost_table()
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
@@ -892,6 +816,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 	}
 
 	Groove* optimalGroove;
+
 	//Compute the the CostTable. Dynamic programming - memoization.
 	CostTable* nCostTable = compute_cost_table(reducedImage);
 	if(!nCostTable){
@@ -899,10 +824,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		freePNM(reducedImage);
 		return NULL;
 	}
-
-	// bool costTableNeedToBeRebuild;
-
-	// size_t numberOfCostTables = 1;
 
 	for(size_t number = 0; number < k; ++number){
 
@@ -917,18 +838,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 			return NULL;
 		}
 
-		// costTableNeedToBeRebuild = check_cost_table(nCostTable, optimalGroove);
-		// if(costTableNeedToBeRebuild){
-		// 	destroy_cost_table(nCostTable);
-		// 	nCostTable = compute_cost_table(reducedImage);
-		// 	if(!nCostTable){
-		// 		fprintf(stderr, "** ERROR while creating the cost table.\n");
-		// 		destroy_groove(optimalGroove);
-		// 		freePNM(reducedImage);
-		// 		return NULL;
-		// 	}
-		// 	numberOfCostTables++;
-		// }
 		nCostTable = update_cost_table(reducedImage, nCostTable, optimalGroove);
 		if(nCostTable == NULL){
 			fprintf(stderr, "** ERROR while rebuilding the cost table.\n");
@@ -942,8 +851,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		optimalGroove = NULL;
 
 	}//Fin for()
-
-	// printf("Number of cost tables = %lu\n", numberOfCostTables);
 
 	if(optimalGroove)
 		destroy_groove(optimalGroove);
