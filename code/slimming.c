@@ -3,7 +3,6 @@
  * Maxime GOFFART (180521) et Olivier JORIS (182113).
  * ------------------------------------------------------------------------- */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
@@ -290,17 +289,13 @@ static int copy_pnm_image(const PNMImage *source, const PNMImage *destination){
 }//End copy_pnm_image()
 
 static CostTable* compute_cost_table(const PNMImage *image){
-	if(!image || !image->data){
-		fprintf(stderr, "** ERROR : image is not a valid pointer in compute_cost_table.\n");
+	if(!image || !image->data)
 		return NULL;
-	}
 
 	//Allocate struct.
 	CostTable* nCostTable = malloc(sizeof(CostTable));
-	if(!nCostTable){
-		fprintf(stderr, "** ERROR while allocating a CostTable in compute_cost_table.\n");
+	if(!nCostTable)
 		return NULL;
-	}
 
 	nCostTable->width = image->width;
 	nCostTable->height = image->height;
@@ -308,7 +303,6 @@ static CostTable* compute_cost_table(const PNMImage *image){
 	//Allocate table attribut.
 	nCostTable->table = malloc(sizeof(float*) * image->height);
 	if(!nCostTable->table){
-		fprintf(stderr, "** ERROR while allocating an array of float* in compute_cost_table.\n");
 		if(nCostTable)
 			free(nCostTable);
 		return NULL;
@@ -318,7 +312,6 @@ static CostTable* compute_cost_table(const PNMImage *image){
 
 		nCostTable->table[i] = calloc(image->width, sizeof(float));
 		if(!nCostTable->table[i]){
-			fprintf(stderr, "** ERROR while allocating an array of float in compute_cost_table.\n");
 			for(size_t j = 0; j < i; ++j){
 				if(nCostTable->table[j])
 					free(nCostTable->table[j]);
@@ -336,7 +329,6 @@ static CostTable* compute_cost_table(const PNMImage *image){
 		nCostTable->table[0][i] = pixel_energy(image, 0, i);
 
 		if(nCostTable->table[0][i] < 0){
-			fprintf(stderr, "** ERROR while filling the first line of the CostTable in compute_cost_table.\n");
 			destroy_cost_table(nCostTable);
 			return NULL;
 		}
@@ -386,50 +378,34 @@ static void destroy_cost_table(CostTable* nCostTable){
 }//End of destroy_cost_table()
 
 static float pixel_energy(const PNMImage *image, const size_t i, const size_t j){
-    if(!image){
-        fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in pixel_energy.\n");
+    if(!image)
         return -1;
-    }
 
-    if(!image->data){
-        fprintf(stderr, "** ERROR : data is not a valid pointeur (= NULL) in pixel_energy.\n");
+    if(!image->data)
         return -2;
-    }
 
-    if(i >= image->height){
-        fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in pixel_energy.\n");
+    if(i >= image->height)
         return -3;
-    }
 
-    if(j >= image->width){
-        fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in pixel_energy.\n");
+    if(j >= image->width)
         return -4;
-    }
 
     return color_energy(image, i, j, red) + color_energy(image, i, j, green) +
            color_energy(image, i, j, blue);
 }//End pixel_energy()
 
 static float color_energy(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
-    if(!image){
-        fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in color_energy.\n");
+    if(!image)
         return -1.0;
-    }
 
-    if(!image->data){
-        fprintf(stderr, "** ERROR : data is not a valid pointeur (= NULL) in color_energy.\n");
+    if(!image->data)
         return -2.0;
-    }
 
-    if(i >= image->height){
-        fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in color_energy.\n");
+    if(i >= image->height)
         return -3.0;
-    }
 
-    if(j >= image->width){
-        fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in color_energy.\n");
+    if(j >= image->width)
         return -4.0;
-    }
 
     //Extremes cases (pixel is on a edge of the image).
 
@@ -479,25 +455,17 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
 }//End color_energy()
 
 static float color_value(const PNMImage *image, const size_t i, const size_t j, const colorChannel channel){
-    if(!image){
-        fprintf(stderr, "** ERROR : image is not a valid pointeur (= NULL) in color_value.\n");
+    if(!image)
         return -1;
-    }
 
-    if(!image->data){
-        fprintf(stderr, "** ERROR : data is not a valid pointeur (= NULL) in color_value.\n");
+    if(!image->data)
         return -2;
-    }
 
-    if(i >= image->height){
-        fprintf(stderr, "** ERROR : i index is bigger than the height of the picture in color_value.\n");
+    if(i >= image->height)
         return -3;
-    }
 
-    if(j >= image->width){
-        fprintf(stderr, "** ERROR : j index is bigger than the width of the picture in color_value.\n");
+    if(j >= image->width)
         return -4;
-    }
 
     switch(channel){
         case red:
@@ -510,7 +478,6 @@ static float color_value(const PNMImage *image, const size_t i, const size_t j, 
             return image->data[(i * image->width) + j].blue;
             break;
         default:
-           fprintf(stderr, "** ERROR : color of the actual pixel is unknown in color_value.\n");
            return -5;
            break;
     }
@@ -539,15 +506,11 @@ static PixelCoordinates find_optimal_pixel(const CostTable* nCostTable, const si
 	nvPixel.line = 0;
 	nvPixel.column = 0;
 
-	if(!nCostTable || !nCostTable->table){
-		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_pixel equal(s) NULL.\n");
+	if(!nCostTable || !nCostTable->table)
 		return nvPixel;
-	}
 
-	if(currentLine <= 0){
-		fprintf(stderr, "** ERROR : currentLine <= 0 in find_optimal_pixel().\n");
+	if(currentLine <= 0)
 		return nvPixel;
-	}
 
 	nvPixel.line = currentLine - 1;
 
@@ -596,17 +559,13 @@ static PixelCoordinates find_optimal_pixel(const CostTable* nCostTable, const si
 }//End find_optimal_pixel()
 
 static Groove* find_optimal_groove(const CostTable* nCostTable){
-	if(!nCostTable || !nCostTable->table){
-		fprintf(stderr, "** ERROR : pointer(s) to the CostTable in find_optimal_groove equal(s) NULL.\n");
+	if(!nCostTable || !nCostTable->table)
 		return NULL;
-	}
 
 	//Allocating the structure.
 	Groove* optimalGroove = malloc(sizeof(Groove));
-	if(!optimalGroove){
-		fprintf(stderr, "** ERROR while allocating memory for the structure in find_optimal_groove.\n");
+	if(!optimalGroove)
 		return NULL;
-	}
 
 	optimalGroove->cost = 0;
 
@@ -616,7 +575,6 @@ static Groove* find_optimal_groove(const CostTable* nCostTable){
 	*/
 	optimalGroove->path = malloc(sizeof(PixelCoordinates) * nCostTable->height);
 	if(!optimalGroove->path){
-		fprintf(stderr, "** ERROR while allocating memory for the path of a Groove in find_optimal_groove.\n");
 		if(optimalGroove)
 			free(optimalGroove);
 		return NULL;
@@ -709,10 +667,8 @@ static int remove_groove_image(PNMImage *image, const Groove* nGroove){
 		indexOfPixelToRemove = (nGroove->path[i].line * image->width) + nGroove->path[i].column;
 
 		resultShift = shift_left(image, indexOfPixelToRemove);
-		if(resultShift < 0){
-			fprintf(stderr, "** ERROR while shifting elements in remove_groove_image.\n");
+		if(resultShift < 0)
 			return -1;
-		}
 
 	}
 
@@ -761,7 +717,6 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1]);
 
 				if(nCostTable->table[i][j] < 0){
-					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
 					destroy_cost_table(nCostTable);
 					return NULL;
 				}
@@ -773,7 +728,6 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 					min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
 
 				if(nCostTable->table[i][j] < 0){
-					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
 					destroy_cost_table(nCostTable);
 					return NULL;
 				}
@@ -785,7 +739,6 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j-1]);
 
 				if(nCostTable->table[i][j] < 0){
-					fprintf(stderr, "** ERROR while updating the CostTable in update_cost_table.\n");
 					destroy_cost_table(nCostTable);
 					return NULL;
 				}
@@ -798,30 +751,21 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
-	printf("Picture size : %lux%lu\n", image->width, image->height);
-
 	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
 	PNMImage* reducedImage = createPNM(image->width, image->height);
-	if(!reducedImage){
-		fprintf(stderr, "** ERROR while creating a PNMImage in reduceImageWidth.\n");
+	if(!reducedImage)
 		return NULL;
-	}
 
 	//Copy 'image' into 'reducedImage'.
 	int resultCopy = copy_pnm_image(image, reducedImage);
-	if(resultCopy < 0){
-		fprintf(stderr, "** ERROR while copying a PNMImage into another in reduceImageWidth.\n");
+	if(resultCopy < 0)
 		return NULL;
-	}else{
-		printf("* image was successfully copied in reducedImage\n");
-	}
 
 	Groove* optimalGroove;
 
 	//Compute the the CostTable. Dynamic programming - memoization.
 	CostTable* nCostTable = compute_cost_table(reducedImage);
 	if(!nCostTable){
-		fprintf(stderr, "** ERROR while creating the cost table.\n");
 		freePNM(reducedImage);
 		return NULL;
 	}
@@ -832,7 +776,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 		int resultRemove = remove_groove_image(reducedImage, optimalGroove);
 		if(resultRemove < 0){
-			fprintf(stderr, "** ERROR while removing groove in image\n");
 			destroy_groove(optimalGroove);
 			destroy_cost_table(nCostTable);
 			freePNM(reducedImage);
@@ -841,7 +784,6 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 		nCostTable = update_cost_table(reducedImage, nCostTable, optimalGroove);
 		if(nCostTable == NULL){
-			fprintf(stderr, "** ERROR while rebuilding the cost table.\n");
 			destroy_groove(optimalGroove);
 			destroy_cost_table(nCostTable);
 			freePNM(reducedImage);
