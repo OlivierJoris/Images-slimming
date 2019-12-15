@@ -758,8 +758,10 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
 	//Copy 'image' into 'reducedImage'.
 	int resultCopy = copy_pnm_image(image, reducedImage);
-	if(resultCopy < 0)
+	if(resultCopy < 0){
+		freePNM(reducedImage);
 		return NULL;
+	}
 
 	Groove* optimalGroove;
 
@@ -773,6 +775,11 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 	for(size_t number = 0; number < k; ++number){
 
 		optimalGroove = find_optimal_groove(nCostTable);
+		if(!optimalGroove){
+			freePNM(reducedImage);
+			destroy_cost_table(nCostTable);
+			return NULL;
+		}
 
 		int resultRemove = remove_groove_image(reducedImage, optimalGroove);
 		if(resultRemove < 0){
@@ -783,9 +790,8 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 		}
 
 		nCostTable = update_cost_table(reducedImage, nCostTable, optimalGroove);
-		if(nCostTable == NULL){
+		if(!nCostTable){
 			destroy_groove(optimalGroove);
-			destroy_cost_table(nCostTable);
 			freePNM(reducedImage);
 			return NULL;
 		}
