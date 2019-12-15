@@ -751,6 +751,9 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 
 PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 
+	if(k >= image->width)
+		return NULL;
+
 	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
 	PNMImage* reducedImage = createPNM(image->width, image->height);
 	if(!reducedImage)
