@@ -121,8 +121,8 @@ La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts 
         				\End
                 \End
         \li \Comment Ajouter le pixel trouvé au sillon optimal.
-        \li $\attrib{\id{optimalGroove}[\attrib{cTable}{height}]}{line} \gets \attrib{cTable}{height}$
-        \li $\attrib{\id{optimalGroove}[\attrib{cTable}{height}]}{column} \gets \id{positionLastLine}$
+        \li $\attrib{\attrib{optimalGroove}{path}[\attrib{cTable}{height}]}{line} \gets \attrib{cTable}{height}$
+        \li $\attrib{\attrib{optimalGroove}{path}[\attrib{cTable}{height}]}{column} \gets \id{positionLastLine}$
         \li
         \li \Comment Nous devons ajouter au sillon les pixels voisins avec les plus petits coûts pour rejoindre\\ \hspace {0.3cm} le haut de l'image depuis le bas.
         \li $\id{currentLine} \gets \attrib{cTable}{height} - 1$
@@ -131,8 +131,8 @@ La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts 
         \li \While $\id{currentLine} \geq 1$
         \li	\Do
         		$nvPixel \gets \func{find\_optimal\_pixel}(cTable, currentLine + 1,$ \\ \hspace{6.15cm} $\attrib{\id{optimalGroove}[currentLine + 1]}{column})$
-        \li		$\attrib{\id{optimalGroove}[currentLine]}{line} \gets \id{curentLine}$
-        \li		$\attrib{\id{optimalGroove}[currentLine]}{column} \gets \attrib{nvPixel}{column}$
+        \li		$\attrib{\attrib{optimalGroove}{path}[currentLine]}{line} \gets \id{curentLine}$
+        \li		$\attrib{\attrib{optimalGroove}{path}[currentLine]}{column} \gets \attrib{nvPixel}{column}$
         \li		$\id{currentLine} \gets \id{currentLine} - 1$
         \li	\End
         \li	$\attrib{optimalGroove}{cost} = \id{minLastLine}$
@@ -192,7 +192,7 @@ Si on additionne les complexités temporelles de chaque ligne, on obtient $\math
 \noindent Concernant les complexités spatiales :
 
 \begin{enumerate}
-	\item[$\bullet$] Stocker la copie de l'image qu'on va retournée représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
+	\item[$\bullet$] Stocker la copie de l'image qu'on va retourner représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
 	\item[$\bullet$] Stocker la table des coûts représente une complexité spatiale de $\Theta(\id{n} \times \id{m})$.
 	\item[$\bullet$] Stocker le sillon optimal représente une complexité spatiale de $\Theta(\id{n})$.
 \end{enumerate}
