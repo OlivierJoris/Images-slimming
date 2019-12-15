@@ -695,8 +695,8 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 	size_t firstColumn = optimalGroove->path[0].column;
 
 	//First line
-	if(firstColumn >= image->width)
-		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, image->width - 1);
+	if(firstColumn >= nCostTable->width)
+		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, nCostTable->width - 1);
 	else
 		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, firstColumn);
 
@@ -709,7 +709,7 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 		if(j < 0)
 			j = 0;
 
-		for(; j < (int)image->width && j <= (int)firstColumn + i; ++j){
+		for(; j < (int)nCostTable->width && j <= (int)firstColumn + i; ++j){
 
 			//On the left edge of the image, only 2 possible values.
 			if(j == 0){
@@ -722,7 +722,7 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 				}
 			}
 
-			if(j != 0 && j != (int)image->width - 1){
+			if(j != 0 && j != (int)nCostTable->width - 1){
 				//In the middle of the image.
 				nCostTable->table[i][j] = pixel_energy(image, i, j) +
 					min_with_three_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j+1], nCostTable->table[i-1][j-1]);
@@ -734,7 +734,7 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 			}
 
 			//On the right edge of the image, only 2 possible values.
-			if(j == (int)image->width - 1){
+			if(j == (int)nCostTable->width - 1){
 				nCostTable->table[i][j] = pixel_energy(image, i, j) +
 					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j-1]);
 
