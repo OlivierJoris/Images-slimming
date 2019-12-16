@@ -18,7 +18,7 @@
 
 //Structure representing a table which will store the cost of each pixel.
 typedef struct CostTable_t{
-	size_t height, width; //Height and width of the image.
+	size_t height, width; //Height and width of the table.
 	float **table; //Table of size width * height that will store the cost of each pixel.
 }CostTable;
 
@@ -34,7 +34,7 @@ typedef struct Groove_t{
 	float cost; //The cost of the groove.
 }Groove;
 
-//Differents color channels possible.
+//Different color channels possible.
 typedef enum{
     red,
     green,
@@ -407,7 +407,7 @@ static float color_energy(const PNMImage *image, const size_t i, const size_t j,
     if(j >= image->width)
         return -4.0;
 
-    //Extremes cases (pixel is on a edge of the image).
+    //Extreme cases (pixel is on a edge of the image).
 
     if(i == image->height - 1 && j == image->width - 1){ //Bottom right corner.
         return (fabs(color_value(image, i - 1, j, channel) - color_value(image, i, j, channel)) / 2) +
@@ -542,7 +542,7 @@ static PixelCoordinates find_optimal_pixel(const CostTable* nCostTable, const si
 	//If the pixel (currentLine, currentRow) isn't on the left egde nor on the right edge.
 
 	if(nCostTable->table[currentLine - 1][currentRow - 1] < nCostTable->table[currentLine - 1][currentRow]
-	   && nCostTable->table[currentLine - 1][currentRow] < nCostTable->table[currentLine - 1][currentRow + 1]){
+	   && nCostTable->table[currentLine - 1][currentRow - 1] < nCostTable->table[currentLine - 1][currentRow + 1]){
 
 		nvPixel.column = currentRow - 1;
 		return nvPixel;
