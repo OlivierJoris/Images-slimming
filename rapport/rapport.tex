@@ -102,7 +102,7 @@ Si on continue la construction de ce graphe, celui-ci croît exponentiellement j
 
 \subsection{Pseudo-code du calcul du coût du sillon optimal}
 
-La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts dont l'élément (i, j) renseigne sur le coût du pixel (i,j) et renvoie le sillon optimal.\\La fonction \proc{find\_optimal\_pixel} prend en arguments la table des coûts, un indice de colonne et un indice de ligne. Cette fonction renvoie un pixel optimal à ajouter dans le sillon sur base du dernier pixel ajouté dans le sillon (dont les coordonnées sont passées en paramètres de la fonction).
+La fonction \proc{find\_optimal\_groove} prend en argument une table des coûts dont l'élément (i, j) renseigne sur le coût du pixel (i,j) et renvoie le sillon optimal.\\La fonction \proc{find\_optimal\_pixel} prend en arguments la table des coûts, un indice de ligne et un indice de colonne. Cette fonction renvoie un pixel optimal à ajouter dans le sillon sur base du dernier pixel ajouté dans le sillon (dont les coordonnées sont passées en paramètres de la fonction).
 
 \begin{codebox} %%Explication du package : https://www.cs.dartmouth.edu/~thc/clrscode
         \Procname{$\proc{find\_optimal\_groove}(cTable)$}
@@ -167,7 +167,7 @@ La fonction \proc{update\_cost\_table}(image, costTable, groove) permet de mettr
 
 Les lignes 1 et 2 nous permettent d'obtenir une copie de l'image qu'on va manipuler pour ne pas modifier l'image source. C'est cette copie que la fonction va retourner.
 A la ligne 4, on calcule la table des coûts qui va être utile pour trouver les sillons qu'on doit supprimer de l'image. La table des coûts est la mémoïsation de l'approche par programmation dynamique.\\
-La ligne 7 permet de trouver le sillon optimal. Cette fonction a été expliquée en détail au point précédent. La ligne 8 nous permet de retirer de l'image les pixels se trouvant dans le sillon optimal. Ensuite, la ligne 9 met à jour la table des coûts sans la recalculer entièrement. On réalise aux lignes 7 à 9 un nombre \id{k} de fois ces opérations avec \id{k} qui correspond aux nombres de pixels qu'on souhaite retirer de la largeur de l'image.
+La ligne 7 permet de trouver le sillon optimal. Cette fonction a été expliquée en détail au point précédent. La ligne 8 nous permet de retirer de l'image les pixels se trouvant dans le sillon optimal. Ensuite, la ligne 9 met à jour la table des coûts sans la recalculer entièrement. On réalise les lignes 7 à 9 un nombre \id{k} de fois avec \id{k} qui correspond aux nombres de pixels qu'on souhaite retirer de la largeur de l'image.
 
 \subsection{Complexité en temps et en espace de la réduction en largeur d'une image}
 On a toujours \id{n} qui est la hauteur et \id{m} qui est la largeur de l'image. \id{k} correspond au nombre de pixels qu'on souhaite retirer de la largeur de l'image. Si on reprend le pseudo-code du point précédent en y ajoutant les complexités temporelles :
