@@ -695,10 +695,17 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 	size_t firstColumn = optimalGroove->path[0].column;
 
 	//First line
-	if(firstColumn >= nCostTable->width)
-		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, nCostTable->width - 1);
-	else
+	if(firstColumn == 0){
 		nCostTable->table[0][firstColumn] = pixel_energy(image, 0, firstColumn);
+	}else{
+		if(firstColumn == nCostTable->width){
+			nCostTable->table[0][firstColumn] = pixel_energy(image, 0, nCostTable->width - 1);
+		}else{
+			nCostTable->table[0][firstColumn - 1] = pixel_energy(image, 0, firstColumn - 1);
+			nCostTable->table[0][firstColumn] = pixel_energy(image, 0, firstColumn);
+			nCostTable->table[0][firstColumn + 1] = pixel_energy(image, 0, firstColumn + 1);
+		}
+	}
 
 	int j = 0; //Must be int because it can be < 0 and size_t is an unsigned type.
 
