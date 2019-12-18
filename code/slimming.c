@@ -2,7 +2,6 @@
  * Implementation of the slimming interface.
  * Maxime GOFFART (180521) et Olivier JORIS (182113).
  * ------------------------------------------------------------------------- */
-#include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
