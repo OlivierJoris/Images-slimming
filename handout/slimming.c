@@ -2,7 +2,7 @@
  * Implementation of the slimming interface.
  * Maxime GOFFART (180521) et Olivier JORIS (182113).
  * ------------------------------------------------------------------------- */
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
@@ -681,6 +681,11 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 	if(!optimalGroove)
 		return NULL;
 
+	if(nCostTable->width - 1 == 1){
+		--nCostTable->width;
+		return nCostTable;
+	}
+
 	//We have to update the cost table.
 
 	//We shift elements of one position left (beginning at the groove column) on each line of the table.
@@ -742,6 +747,7 @@ static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable
 
 			//On the right edge of the image, only 2 possible values.
 			if(j == (int)nCostTable->width - 1){
+
 				nCostTable->table[i][j] = pixel_energy(image, i, j) +
 					min_with_two_arguments(nCostTable->table[i-1][j], nCostTable->table[i-1][j-1]);
 
