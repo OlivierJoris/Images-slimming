@@ -675,11 +675,18 @@ static int remove_groove_image(PNMImage *image, const Groove* nGroove){
 }//End remove_groove_image()
 
 static CostTable* update_cost_table(const PNMImage* image, CostTable* nCostTable, const Groove* optimalGroove){
-	if(!nCostTable)
+	if(!image)
+		return NULL;
+	if(!nCostTable || !nCostTable->table)
 		return NULL;
 	if(!optimalGroove)
 		return NULL;
 
+	/*
+	 After the update, the table will have a width equals to 1.
+	 So we can't remove another Groove anymore.
+	 So we don't update the costTable to save CPU time.
+	*/
 	if(nCostTable->width - 1 == 1){
 		--nCostTable->width;
 		return nCostTable;
@@ -766,7 +773,7 @@ PNMImage* reduceImageWidth(const PNMImage* image, size_t k){
 	if(k >= image->width)
 		return NULL;
 
-	//Create the PNMImage which will contain the image with a width of image->width - 'k'.
+	//Create the PNMImage which will be containing the image with a width of image->width - 'k'.
 	PNMImage* reducedImage = createPNM(image->width, image->height);
 	if(!reducedImage)
 		return NULL;
