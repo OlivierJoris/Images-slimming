@@ -1,2 +1,2 @@
-# info_2050_projet3
-Projet 3 de INFO-2050
+# Images slimming 
+Images slimming implementation for PNM images made in C. This project has been realized as part of the *Programmation avancée* course given by Pascal Fontaine at the University of Liège during the 2019-2020 academic year.
